@@ -9,7 +9,7 @@ on:
       - '**'
 
 jobs:
-  test:
+  go-arcadium-test:
     strategy:
       matrix:
         go: [ '1.26.x' ]
@@ -30,10 +30,8 @@ jobs:
 
     - name: lint
       run: |
-        cd go/arcadium
-        make lint
+        cd go/arcadium && make lint
 
     - name: test
       run: |
-        cd go/arcadium
-        make test
+        cd go/arcadium && make test
