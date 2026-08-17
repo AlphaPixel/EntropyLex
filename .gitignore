@@ -39,3 +39,56 @@
 
 # debug information files
 *.dwo
+
+#local files
+*-local-*
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.env
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+htmlcov/
+
+# Rust
+target/
+Cargo.lock
+
+# Go
+vendor/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Dictionary derivation inputs.
+# Source corpora, frequency lists, pronunciation lexicons and especially word
+# embedding models are large (embeddings run to gigabytes) and are third-party
+# data with their own licenses. They are pinned by version and recorded in each
+# dictionary's provenance header instead of being committed here.
+tools/**/corpus/
+tools/**/cache/
+*.vec
+*.bin
+*.npy
+*.npz
+*.model
+*.txt.gz
+*.zip
+
+# Derived dictionaries are committed deliberately, not swept in by a wildcard.
+# Working scratch from derivation runs is not.
+tools/**/work/
+*.report.tmp
