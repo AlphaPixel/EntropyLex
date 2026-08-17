@@ -147,11 +147,11 @@ A token sequence does not describe itself. Correct decoding requires knowing bot
 1. The profile (`w`), and
 2. The exact dictionary used
 
-Both must be carried out of band, in the same way the choice of Base32 versus Base58 is carried out of band. A dictionary artifact therefore declares its profile, and implementations should be able to report a dictionary fingerprint (see section 11.7) so that a mismatch is detected rather than silently mis-decoded.
+Both must be carried out of band, in the same way the choice of Base32 versus Base58 is carried out of band. A dictionary file therefore declares its profile, and implementations must be able to report its dictionary fingerprint (see section 11.7). The fingerprint is a short SHA-256 identifier for the ordered token mapping and the rules needed to interpret it. Matching fingerprints mean that two files decode phrases the same way, even when one file is JSON and the other is binary.
 
 Implementations must not attempt to auto-detect the profile from a token sequence. A sequence valid under one dictionary may be valid but different under another.
 
-One conditional exception is under consideration. If the dictionaries for a family of profiles are derived as mutually disjoint token sets (Scheme C in section 11.8), then every token identifies its profile unambiguously, and auto-detection becomes sound *within that dictionary family*. That composition decision has not been made, so this exception is not yet in force. Even if adopted, it would identify the profile only — not the language, script, or dictionary version — so the fingerprint requirement stands either way.
+One conditional exception is under consideration. If the dictionaries for a family of profiles are derived as mutually disjoint token sets (Scheme C in section 11.8), then every token identifies its profile unambiguously, and auto-detection becomes sound *within that dictionary family*. That composition decision has not been made, so this exception is not yet in force. Even if adopted, it would identify the profile only — not the exact mapping or phrase-recognition rules — so the fingerprint requirement stands either way.
 
 ---
 
@@ -179,7 +179,7 @@ For EL-8 the trim dictionary is empty and this entire subsection is inert.
 
 ### 4.3 Unified index space **(provisional)**
 
-To keep dictionary artifacts as a single flat list, all tokens occupy one index space:
+To keep dictionary mappings as a single flat list in both LXJ and LXB, all tokens occupy one index space:
 
 - Indices `0 .. 2^w - 1` are the normal tokens, index equal to the encoded value.
 - Trim tokens follow, grouped by ascending remainder size. For remainder `r` with value `v`:
@@ -223,7 +223,7 @@ A token's value is formed by reading its bits in stream order, with the first bi
 This ordering applies to all profiles and is not configurable.
 
 ### 5.2 Canonical phrase form
-The canonical written form of an EntropyLex phrase is the tokens in order, separated by a single ASCII space (U+0020), with no leading or trailing whitespace, in the exact case and Unicode normalization form (NFC) recorded in the dictionary artifact.
+The canonical written form of an EntropyLex phrase is the tokens in order, separated by a single ASCII space (U+0020), with no leading or trailing whitespace, in the exact case and Unicode normalization form (NFC) recorded in the dictionary file.
 
 ### 5.3 Input normalization for decoding
 Decoders should accept a superset of the canonical form and normalize before lookup:
@@ -347,8 +347,8 @@ The rejected alternative was a mandatory length header. Even an 8 bit header wou
 | Profile | Normal | Trim | Total | English feasibility |
 |---|---|---|---|---|
 | EL-8  | 256   | 0    | 256   | Trivially sourceable; can be hand-audited |
-| EL-12 | 4096  | 272  | 4368  | Comfortably within high-frequency core vocabulary |
-| EL-14 | 16384 | 5460 | 21844 | Fits within common English word lists of up to 25,000 entries, with modest headroom |
+| EL-12 | 4096  | 272  | 4368  | Comfortably within reviewed high-frequency source-list sizes |
+| EL-14 | 16384 | 5460 | 21844 | Raw open sources are large enough; survival after familiarity and distance filters remains to be measured |
 | EL-16 | 65536 | 256  | 65792 | Not feasible for single-word English tokens; see section 12 |
 
 Because trim tokens are used less often than normal tokens, they should be drawn from the less-frequent end of the selected vocabulary, leaving the most common and most robust words for normal tokens.
@@ -390,14 +390,15 @@ Planned tools, to live under a `tools/` directory:
 | 2 | `eldict-filter`  | Apply hard disqualifiers; emit surviving candidates with rejection reasons logged |
 | 3 | `eldict-score`   | Compute orthographic, phonetic, and semantic feature vectors for each candidate |
 | 4 | `eldict-select`  | Build the confusability graph and select the final token set to a target count |
-| 5 | `eldict-emit`    | Assign canonical indices, partition normal versus trim, write the dictionary artifact |
-| 6 | `eldict-verify`  | Re-derive metrics from the artifact, assert all invariants, emit a quality report |
+| 5 | `eldict-emit`    | Assign canonical indices, partition normal versus trim, and write the canonical LXJ file |
+| 6 | `eldict-compile` | Compile LXJ into the optional LXB runtime representation without changing its meaning or fingerprint |
+| 7 | `eldict-verify`  | Verify file structure and, when source inputs are supplied, re-run quality checks and emit a report |
 
-Every stage is deterministic given its inputs and a recorded configuration file. Re-running the pipeline on the same inputs must produce a byte-identical artifact.
+Every stage is deterministic given its inputs and a recorded configuration file. Re-running the pipeline on the same inputs must produce the same ordered mapping and dictionary fingerprint. The canonical LXJ formatter and the eventual LXB layout must additionally produce byte-identical files.
 
 ### 11.2 Stage 1 — ingest
 
-Input sources, all pinned to a specific version and recorded in the artifact provenance:
+Input sources, all pinned to a specific version and recorded as structured LXJ provenance records:
 
 - A master word list with usage frequency (a corpus-derived frequency list, so that "common" is measured rather than asserted)
 - A pronunciation lexicon giving a phoneme sequence per word, for phonetic distance
@@ -405,6 +406,8 @@ Input sources, all pinned to a specific version and recorded in the artifact pro
 - A word embedding model or equivalent, for semantic distance
 
 Candidates enter with: surface form, lemma, frequency rank, phoneme string, syllable count, part of speech.
+
+Candidate sources and their licenses, published sizes, and suitability are tracked in [`data/dict/SOURCES.md`](data/dict/SOURCES.md). A source is not approved merely because it is downloadable. Before use, its exact release or commit, downloaded-file SHA-256 checksum, license obligations, and ingested record count must be recorded.
 
 ### 11.3 Stage 2 — hard filters
 
@@ -443,13 +446,13 @@ Three independent distance families, each computed pairwise over surviving candi
 
 ### 11.5 Stage 4 — selection
 
-Selection is a maximin problem: choose `n` tokens from `m` candidates maximizing the minimum pairwise distance under a combined metric.
+Selection is a maximin problem: choose `n` tokens from `m` candidates so that even the two most easily confused selected words are as different as possible under the combined spelling, sound, and meaning checks.
 
 The intended approach **(provisional)**:
 
 1. Build a *confusability graph*: an edge joins any two candidates whose distance falls below the threshold in **any** of the three families. Conflicting words must not both be selected.
 2. Seed with the highest-frequency candidates, since familiarity is the property that cannot be recovered later.
-3. Greedily add candidates by descending frequency, skipping any that conflict with an already-selected token — a graph independent-set heuristic.
+3. Walk through candidates from most to least familiar. Add a word only when it has no conflict edge to a word already selected. In graph terminology this is an independent-set heuristic; operationally it is simply “keep the familiar word, then skip words too similar to it.”
 4. If the target count `n` is not reached, relax thresholds by a recorded step and repeat, logging exactly which threshold was relaxed and by how much.
 5. If the target count is exceeded, tighten thresholds and repeat.
 
@@ -464,40 +467,45 @@ Exact optimization is not required; a reproducible heuristic with a published qu
 3. Within each group, sort tokens by Unicode code point order (NFC, and for cased scripts, lowercase) to produce the canonical order.
 4. Assign indices per the unified index space in section 4.3.
 
-Sorting the final groups lexicographically rather than by frequency makes the artifact stable and diffable: a token added or removed shifts a contiguous run of indices instead of permuting the whole file.
+Sorting the final groups lexicographically rather than by frequency makes LXJ stable and diffable: a token added or removed shifts a contiguous run of indices instead of permuting the whole mapping.
 
-### 11.7 Stage 6 — artifact, provenance, and verification
+### 11.7 Stages 6 and 7 — dictionary files, provenance, and verification
 
-Dictionary artifact format **(provisional)**: UTF-8, LF line endings, NFC normalized. A header block of `#`-prefixed lines carries metadata; every subsequent line is one token, with the index implied by line order.
+One dictionary has two representations:
 
-```
-# entropylex-dictionary v1
-# profile: EL-14
-# language: en
-# normal: 16384
-# trim: 5460
-# total: 21844
-# sources: <pinned source list and versions>
-# config: <hash of the selection configuration>
-# sha256: <hash of the token body>
-abandon
-ability
-...
-```
+- **LXJ** (`.lxj`) is the canonical, human-readable JSON representation and the source of truth.
+- **LXB** (`.lxb`) is an optional compiled binary representation for implementations that benefit from faster loading.
 
-Suggested artifact naming: `entropylex-<lang>-<w>-v<version>.txt`, stored under `data/dict/`.
+For example: `entropylex-en-14-v1.lxj` and `entropylex-en-14-v1.lxb`, stored under `data/dict/`.
 
-The `sha256` of the token body is the **dictionary fingerprint** referenced in section 3.8. Implementations should be able to report it, so that an encoder and decoder using different dictionaries fail loudly instead of producing plausible garbage.
+An LXB file is generated only from LXJ. The two files have different ordinary file checksums because their bytes differ, but they must have the same dictionary fingerprint and must assign exactly the same token to every index. Implementations are required to support LXJ. LXB support is optional until its version 1 byte layout is finalized.
 
-`eldict-verify` must assert, from the artifact alone:
+LXJ contains a flat token array whose array position is the unified index from section 4.3. It also contains the profile, counts, written-token recognition rules, structured source records, selection-configuration checksum, and dictionary fingerprint. It must not store a redundant index on every token.
 
+The **dictionary fingerprint** is a SHA-256 identifier for the ordered mapping and the rules that affect how phrases are recognized and decoded. It covers the profile and index scheme, normalization/case/segmentation behavior, and every token in index order. It does not cover JSON indentation, property order, comments, timestamps, source URLs, or quality reports, because those do not change decoding.
+
+The exact bytes supplied to SHA-256 are the **fingerprint input**. They will be defined independently of LXJ and LXB serialization, with every variable-length string preceded by its byte length. This prevents serialization details from changing dictionary identity and lets every implementation calculate the same result. The exact version 1 fingerprint input remains to be specified.
+
+Language and script labels are recorded in LXJ, but descriptive labels alone do not change the fingerprint. Any actual behavior they select — for example case handling, glyph segmentation, or right-to-left display rules — does.
+
+A fingerprint detects a mismatch only when the expected fingerprint comes from a trusted release or configuration. It does not authenticate a file against deliberate replacement. Published releases may also provide a checksum for each exact LXJ and LXB file.
+
+The LXB version 1 design must contain fixed identification and bounds information, the decoding fields needed at runtime, the shared fingerprint, and canonical UTF-8 token bytes. A length-prefixed token sequence and an offset table plus string block are both candidates. The choice must be benchmarked before the byte layout is frozen. Version 1 will not require a serialized hash table, trie, compressed token block, or minimal-perfect hash.
+
+`eldict-verify` can assert the following from LXJ or LXB alone:
+
+- Supported file format and fingerprint recipe
 - Exact token counts for the declared profile
-- No duplicate tokens anywhere in the file
-- Normal and trim sets disjoint
-- Canonical ordering intact
-- All hard filters still satisfied
-- Minimum pairwise distance in each family, reported per family with the worst offending pairs listed
-- Round-trip of a set of published test vectors
+- Valid UTF-8, required Unicode normalization, and token-character rules
+- No empty or duplicate tokens
+- Normal and trim sets disjoint and canonically ordered
+- Calculated fingerprint matches the stored fingerprint
+- Round-trip of published dictionary-dependent test vectors
+- LXB section bounds are valid and, when LXJ is supplied, both files describe exactly the same dictionary
+
+The final dictionary file cannot by itself prove that the source words were familiar, phonetically distant, semantically distant, or produced by the claimed pipeline. Those quality and reproducibility checks additionally require the pinned source datasets and selection configuration. The verifier's quality report must name and checksum those inputs, report the surviving hard filters and minimum distances, and list the worst offending pairs.
+
+The detailed working design and remaining decisions are in [`data/dict/FORMAT.md`](data/dict/FORMAT.md).
 
 ### 11.8 Cross-profile dictionary composition — UNDECIDED
 
@@ -541,7 +549,7 @@ The cost is corpus size:
 Two observations on that total:
 
 - The often-quoted figure for this idea is 2^14 + 2^12 + 2^8 = **20,736**, but that counts only the normal dictionaries. Trim tokens must also be disjoint — both from each other and from every normal set — which adds 5,732 and brings the real requirement to **26,468 tokens**.
-- 26,468 exceeds the 20,000–25,000 common English root word estimate that motivated `w = 14` in the first place. However, only the 20,736 normal tokens need to be high-familiarity words; the 5,732 trim tokens are drawn from the low-frequency tail by design (section 9). So the demand on *good* vocabulary is 20,736, which does fit the estimate, and the corpus needs roughly 5,700 words of tail beyond it. Feasible, but it consumes essentially all available headroom.
+- 26,468 exceeds the reviewed 25,000-entry 12dicts core list, although broader permissively licensed lemmatized and lexical sources contain many more raw entries. Only the 20,736 normal tokens need the highest familiarity; the 5,732 trim tokens can come from the lower-frequency surviving tail because trim tokens occur at most once per phrase. This makes Scheme C an experiment worth running, not a feasibility result. The selector must publish survivor counts and threshold relaxations before this scheme can be called practical.
 
 A partial variant — disjoint normal dictionaries with a single shared trim dictionary — was considered and is **not recommended**. Because the shared trim set must still avoid all three normal sets, it saves only 272 tokens (26,196 versus 26,468), and it reintroduces ambiguity in exactly the case where it is hardest to notice: a one-byte payload encodes to a single trim token under both EL-12 and EL-14, so such a phrase would carry no identifying information at all. Paying 272 tokens to eliminate that case is obviously correct.
 
@@ -549,11 +557,11 @@ Extending disjointness to EL-16 is not possible for English. Adding it would req
 
 #### Status
 
-**No scheme has been selected.** The trade is: Scheme A is cheapest and simplest, Scheme B gives the best per-profile dictionaries, Scheme C gives self-identifying phrases and hard failure on profile mismatch at the price of nearly all corpus headroom.
+**No scheme has been selected.** The trade is: Scheme A is cheapest and simplest, Scheme B gives the best per-profile dictionaries, and Scheme C gives self-identifying phrases and hard failure on profile mismatch while demanding 26,468 distinct survivors and potentially weaker distance thresholds.
 
 This decision must be made before `eldict-select` is written, since it determines whether the selector runs once with a partitioning step or three times with exclusion sets. It also interacts with section 3.8 (profile identification) and section 13.5 (error detection), both of which currently assume the conservative case.
 
-Note also that disjointness under Scheme C identifies the *profile* only, and only within a single dictionary family. It does not distinguish languages, scripts, or dictionary versions. The fingerprint requirement in section 11.7 stands regardless of which scheme is chosen.
+Note also that disjointness under Scheme C identifies the *profile* only, and only within a single dictionary family. It does not identify the exact token mapping or phrase-recognition rules. The fingerprint requirement in section 11.7 stands regardless of which scheme is chosen.
 
 ---
 
@@ -563,7 +571,7 @@ Nothing in the encoding is English-specific. The bitstream model, trimming, and 
 
 ### 12.1 Why other scripts change the profile calculus
 
-Profile choice for English is bounded by vocabulary size: roughly 20,000 to 25,000 usable common root words puts a hard ceiling near `w = 14`. Scripts with large character inventories or large compound-word lexicons shift that ceiling, and it is worth asking how far — particularly since EL-16 is structurally *simpler* than EL-14, with one trim class instead of six.
+Profile choice for English is bounded by usable vocabulary, not raw database size. A reviewed common-word list contains about 25,000 entries, while broader lemmatized and lexical sources contain 84,000 to more than 135,000; the usable count after familiarity and distance filters is not known yet. EL-14 is the practical ceiling to test. Scripts with large character inventories or large compound-word lexicons may shift that ceiling, and it is worth asking how far — particularly since EL-16 is structurally *simpler* than EL-14, with one trim class instead of six.
 
 The answer, worked through below, is less than one might hope: the binding constraint is not how many characters or words a script possesses, but how many a competent reader can reliably recognize, distinguish, and write from dictation. Those two numbers differ by an order of magnitude in every script examined, and only the second one is a valid dictionary source.
 
@@ -625,15 +633,15 @@ The English criteria in section 10 are weighted toward speech, because English's
 - **Romanization distance** remains useful as a secondary metric — pinyin plus tone for Mandarin, romaji or kana for Japanese — since it governs how the phrase is typed and how it is spoken when speech is unavoidable.
 - **Semantic distance** applies unchanged, and matters more: character sequences in CJK readily read as meaningful compounds, so semantic screening should also reject adjacent-token pairs that form a common word.
 
-The derivation pipeline in section 11 is intended to be metric-pluggable for exactly this reason: stage 3's three distance families are replaced per script, while stages 1, 2, 4, 5, and 6 are unchanged.
+The derivation pipeline in section 11 is intended to be metric-pluggable for exactly this reason: stage 3's three distance families are replaced per script, while stages 1, 2, 4, 5, 6, and 7 are unchanged.
 
 ### 12.5 Additional requirements for non-ASCII dictionaries
 
-- Tokens are stored and compared in Unicode NFC. The normalization form is recorded in the artifact header.
+- Tokens are stored and compared in Unicode NFC. The normalization and matching behavior is recorded explicitly in LXJ and compiled into LXB.
 - For Chinese, the dictionary must declare simplified or traditional; variant characters must not both appear, and a simplified-to-traditional mapping is not a substitute for a separate dictionary artifact with its own fingerprint.
 - Case folding does not apply; decoders must not apply cased-script normalization to these dictionaries.
 - Dictionaries for right-to-left scripts must specify the writing order of tokens explicitly, distinct from the logical token order used by the encoder.
-- The dictionary artifact's language and script tag is part of its identity; two dictionaries with the same profile and different scripts are different dictionaries and must be distinguished by fingerprint.
+- Every dictionary records its language and script. The fingerprint covers the actual behavior needed to recognize and decode its phrases, such as normalization, case handling, glyph segmentation, and logical token order. A descriptive language label alone is not treated as decoding behavior.
 
 ### 12.6 References for the figures in this section
 
@@ -652,7 +660,7 @@ Character inventory counts cited above, with sources. Note the distinction that 
 
 The commonly cited "about 10,000 kanji" is the JIS X 0213 row of this table — an encoding repertoire, roughly 4.7x the jōyō list. It is not a measure of what a Japanese reader knows and must not be used to size a dictionary.
 
-Sources retrieved 2026-08-17. Any figure used to actually build a dictionary must be re-verified against the primary standard document and pinned by version in the artifact provenance header, per section 11.7.
+Sources retrieved 2026-08-17. Any figure used to actually build a dictionary must be re-verified against the primary standard document and pinned in the LXJ source records, per section 11.7.
 
 ---
 
@@ -682,7 +690,7 @@ Applications requiring detection must add their own checksum to the payload befo
 If the disjoint-partition composition of section 11.8 is adopted, a token from the wrong profile's dictionary becomes an immediate hard error. That is not a checksum and does not detect substitution *within* a profile, but it is the only structural error detection EL-8 would have at all, which is a point in that scheme's favor.
 
 ### 13.6 Cross-dictionary confusion
-Because a phrase does not carry its own profile or dictionary identity, decoding with the wrong dictionary can silently produce different, well-formed output. Dictionary fingerprinting (section 11.7) is the mitigation and should be considered a requirement rather than an option for any application where the dictionary may vary.
+Because a phrase does not carry its own profile or dictionary identity, decoding with the wrong dictionary can silently produce different, well-formed output. Checking the dictionary fingerprint (section 11.7) against a trusted expected value is the mitigation and should be considered a requirement rather than an option for any application where the dictionary may vary. Merely recalculating the fingerprint stored inside an untrusted replacement file detects damage but not deliberate substitution.
 
 Profile confusion specifically — decoding an EL-8 phrase as EL-14, say — is a subset of this risk, and its severity depends on the undecided composition question in section 11.8. Under a nested-subset composition it is maximally likely, since every EL-8 phrase is a well-formed EL-14 token run. Under a disjoint partition it becomes impossible.
 
@@ -727,4 +735,6 @@ This draft describes the complete functional behavior of the encoding and decodi
 - Optional error detection schemes
 - Optional interface bindings for various programming languages
 - Optional compression or pre-processing guidelines
+- Final LXJ schema, fingerprint input, and benchmark-selected LXB byte layout; see `data/dict/FORMAT.md`
+- License decision and pinned releases for the candidate derivation inputs recorded in `data/dict/SOURCES.md`
 - **Resolution of the cross-profile dictionary composition question in section 11.8** — nested subset, independent optimization, or disjoint partition. This is the largest undecided item in the specification. It must be settled before `eldict-select` is written, and it changes what sections 3.8, 13.5, and 13.6 are allowed to promise.

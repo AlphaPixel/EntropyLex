@@ -8,7 +8,7 @@ Language-agnostic test data that every EntropyLex implementation must pass.
 
 This matters for sequencing: **the full conformance suite for the encoding logic can be written now, before a single word has been chosen.** Dictionary derivation and implementation are independent tracks, and neither blocks the other.
 
-**Dictionary-dependent vectors** express the expected result as an actual phrase, and are pinned to a specific dictionary fingerprint. They test dictionary loading, canonical form, and input normalization (SPEC.md sections 5.2, 5.3, 11.7). These cannot be authored until dictionaries exist.
+**Dictionary-dependent vectors** express the expected result as an actual phrase and are pinned to a specific dictionary fingerprint. They test dictionary loading, canonical form, and input normalization (SPEC.md sections 5.2, 5.3, 11.7). The same vectors must pass when a dictionary is loaded from LXJ or its matching LXB. These cannot be authored until dictionaries exist.
 
 ## Required coverage
 
@@ -81,7 +81,9 @@ JSON, one file per vector set, UTF-8, LF endings. Proposed shape **(provisional 
 }
 ```
 
-Dictionary-dependent sets add `"dictionary": "entropylex-en-14-v1"` and `"dictionary_sha256": "..."` at the top level, and `"phrase"` per vector.
+Dictionary-dependent sets add `"dictionary": "entropylex-en-14-v1"`, `"dictionary_fingerprint": "sha256:..."`, and `"fingerprint_recipe": "..."` at the top level, and `"phrase"` per vector. `dictionary_fingerprint` identifies the mapping and decoding behavior; it is not the ordinary checksum of either the LXJ or LXB file.
+
+Separate malformed-file fixtures are required for both formats. LXJ fixtures cover invalid schema, counts, UTF-8/Unicode policy, duplicates, token order, and fingerprint mismatch. LXB fixtures additionally cover truncation and invalid section lengths or offsets. Every valid LXJ/LXB pair must be checked for exact agreement at every token index.
 
 ## Provenance
 

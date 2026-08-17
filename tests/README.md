@@ -12,6 +12,8 @@ Implementations keep their own unit tests next to their own code, under `src/<la
 tests/vectors/     Round-trip and validation vectors, as JSON
 ```
 
+Dictionary-dependent vectors cover both canonical LXJ loading and matching LXB loading. Malformed-file fixtures and LXJ/LXB equivalence cases belong under `tests/vectors/` once the schemas and binary layout are finalized.
+
 ## What implementations are expected to do
 
 Load the vectors, run them, and report pass or fail per vector. An implementation that has not run the shared vectors should not be described as conformant.

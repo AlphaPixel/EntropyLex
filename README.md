@@ -37,7 +37,7 @@ index(word) → 14-bit chunk
 
 Encoding proceeds by concatenating the payload bits and slicing them into 14-bit groups. Each group is mapped directly to a word, producing most of the phrase.
 
-Why 14-bits? There are about 20,000-25,000 root words (the base word without pluralization or conjugation) in common English dictionaries. 15 bits would need about 32,000 (2^15^) dictionary tokens. 14 bits (2^14^=16384) fits well within a 20k token dictionary, with some room to spare.
+Why 14-bits? Published common-word and lemmatized English lists range from roughly 25,000 to 84,000 entries, while broader open lexical resources are much larger. A 15-bit normal dictionary alone would need 32,768 tokens. A 14-bit normal dictionary needs 16,384, leaving more room for strict filtering — although whether enough familiar, mutually distinct words survive remains something the derivation experiment must measure rather than assume.
 
 ### 2. Controlled Ending on Byte Boundaries
 
@@ -68,7 +68,7 @@ Because we use 14-bit indices to pack as much entropy per word as possible, and 
 
 An alternative strategy would be to mandate a length header (even just 8 bits) on every message, but since this unilaterally increases every message by 8 bits, this option was discarded. The trimming token method emits no more words than would be necessary for encoding an untrimmed payload with trailing garbage, however it requires the utilization of additional dictionary words to express the shorter trimmed tokens.
 
-The trimming token dictionary needs a set of tokens to represent all sequences of 12, 10, 8, 6, 4, or 2 bits. Therefore the additional dictionary size is 2^12^+2^10^+2^8^+2^6^+2^4^+2^2^ or 4096+1024+256+64+16+4 = 5,460 extra dictionary words. On top of the 2^14^ base 14-bit tokens (16,384), this makes for a total dictionary size of 21,844. This fits well within dictionaries of common English words that are up to 25000 words. Because they are less frequently used, we will select these words from the least-used words within the dictionary we choose.
+The trimming token dictionary needs a set of tokens to represent all sequences of 12, 10, 8, 6, 4, or 2 bits. Therefore the additional dictionary size is 2^12^+2^10^+2^8^+2^6^+2^4^+2^2^ or 4096+1024+256+64+16+4 = 5,460 extra dictionary words. On top of the 2^14^ base 14-bit tokens (16,384), this makes for a total dictionary size of 21,844. Open sources contain far more raw entries than this, but raw count is not the constraint: the pipeline still has to show that 21,844 acceptable and sufficiently distinct tokens survive. Less-frequent surviving words are assigned to trim indices because trim tokens occur at most once per phrase.
 
 ### 5. Summary
 
@@ -126,7 +126,7 @@ The density-optimized target described in the sections above, and the default me
 
 ### A phrase is not self-describing — unless we make it so
 
-A phrase does not carry its own profile or dictionary identity. Decoding correctly requires knowing both, carried out of band, exactly the way "this is Base58, not Base32" is carried out of band. Implementations should be able to report a dictionary fingerprint so a mismatch fails loudly instead of quietly producing different, well-formed bytes.
+A phrase does not carry its own profile or dictionary identity. Decoding correctly requires knowing both, carried out of band, exactly the way "this is Base58, not Base32" is carried out of band. Implementations must report a dictionary fingerprint: a short SHA-256 identifier for the ordered word mapping and the rules needed to interpret it. Applications that know the expected fingerprint can reject a mismatch instead of quietly producing different, well-formed bytes. The canonical LXJ file and its optional compiled LXB file share this fingerprint.
 
 There is, however, a way to make the profile self-evident from the words alone — by carving the three dictionaries out of the master corpus as **mutually disjoint** sets. See [the open question below](#open-question-how-the-three-dictionaries-relate).
 
@@ -134,7 +134,7 @@ There is, however, a way to make the profile self-evident from the words alone �
 
 Nothing in the encoding is English-specific. The bitstream model, trimming, and index space are language-neutral; only the dictionary changes.
 
-What *is* English-specific is the ceiling on `w`. English gives us roughly 20,000–25,000 usable common root words, which is what caps the reference profile at 14 bits. Scripts with large character inventories lift that cap — and because EL-16 has only one trim class, going wider actually makes the *encoder* simpler, not harder.
+What *is* English-specific is the ceiling on `w`. A reviewed core list contains about 25,000 entries and broader lemmatized or lexical sources contain many more, but source-list size is not the same as a usable EntropyLex vocabulary. Familiarity and distance filters will decide the real ceiling. EL-14 is therefore the target to test, not a capacity already proved. Scripts with large character inventories may lift that ceiling — and because EL-16 has only one trim class, going wider actually makes the *encoder* simpler, not harder.
 
 **Chinese, one character per word.** A single Han character can be a token: one glyph carries the whole chunk, phrases are visually compact, and no separators are needed because segmentation is by glyph. The limit is the character inventory — the Table of General Standard Chinese Characters defines 8,105 characters. That is comfortable for EL-12's 4,368 tokens and impossible for EL-14's 21,844. **EL-12 is therefore the natural profile for a single-character Chinese dictionary**, the same way EL-14 is natural for single-word English — a pleasant convergence, since EL-12 is also the simplest profile that has trim logic at all.
 
@@ -164,11 +164,13 @@ The intended pipeline:
    - *Meaning* — embedding cosine distance, to keep near-synonyms like "big"/"large" from both being selected (a human will substitute one for the other from memory and never notice) and to reduce the odds that a random phrase reads as a sentence.
 4. **Select.** Build a confusability graph — an edge between any two words too close in *any* of the three families — then seed with the highest-frequency candidates and greedily add words that conflict with nothing already chosen. Familiarity is the one property that cannot be recovered later, so it drives the ordering. If the target count isn't reached, thresholds relax by a recorded step and the run repeats; the relaxation trace ships with the dictionary. A dictionary that only hit its count by weakening the phonetic threshold twice should say so on its face.
 5. **Partition and index.** The most frequent words become the normal dictionary; the remainder become trim words, since trim words are used far less often. Each group is then sorted lexicographically to assign indices, so the artifact stays stable and diffable.
-6. **Emit and verify.** Write a UTF-8 artifact with a metadata header (profile, language, counts, pinned sources, config hash, SHA-256 fingerprint) and one word per line. A verifier then re-derives everything from the artifact alone and asserts the counts, the disjointness of normal and trim sets, the absence of duplicates, the canonical ordering, the surviving filters, the minimum distance in each family with worst offending pairs named, and a round-trip of the published test vectors.
+6. **Emit, compile, and verify.** Write the canonical human-readable LXJ (`.lxj`) dictionary, optionally compile it into a faster-loading LXB (`.lxb`), and verify that both describe the same ordered mapping. The dictionary file alone can prove its counts, structure, token validity, and fingerprint. Familiarity, pronunciation, semantic quality, and reproducibility checks additionally use the pinned source datasets and selection configuration and are recorded in a quality report.
 
-Every stage is deterministic given its inputs and a recorded config, so re-running the pipeline produces a byte-identical dictionary. The stages are metric-pluggable by design: a Chinese dictionary swaps out step 3's distance families for visual and romanization metrics and leaves the rest of the pipeline alone.
+Every stage is deterministic given its inputs and a recorded config, so re-running the pipeline produces the same mapping and dictionary fingerprint. Canonical LXJ formatting and LXB compilation must also be byte-identical once their formats are finalized. The stages are metric-pluggable by design: a Chinese dictionary swaps out step 3's distance families for visual and romanization metrics and leaves the rest of the pipeline alone.
 
-These tools live under [`tools/`](tools/), organized by language and then by implementor name, the same convention `src/` uses. Independent implementations are welcome and useful: two pipelines written from the spec, run on the same pinned inputs, must produce byte-identical artifacts. If they don't, either the spec is underspecified or one of them is wrong.
+These tools live under [`tools/`](tools/), organized by language and then by implementor name, the same convention `src/` uses. Independent implementations are welcome and useful: two pipelines written from the spec, run on the same pinned inputs, must produce the same mapping and fingerprint, followed by byte-identical canonical LXJ and LXB files once both layouts are final. If they do not, either the spec is underspecified or one implementation is wrong.
+
+The working file-format design is in [`data/dict/FORMAT.md`](data/dict/FORMAT.md). Reviewed source candidates, license conditions, and published or measured counts are in [`data/dict/SOURCES.md`](data/dict/SOURCES.md).
 
 ### Open question: how the three dictionaries relate
 
@@ -188,7 +190,7 @@ The cost of C is corpus size, and it's worth being precise about it. The natural
 | Trim words   | 0   | 272   | 5,460  | 5,732  |
 | **Per profile** | **256** | **4,368** | **21,844** | **26,468** |
 
-26,468 is past the 20,000–25,000 common-root-word estimate that drove the choice of 14 bits in the first place. The saving grace: only the 20,736 normal words need to be genuinely familiar. The 5,732 trim words come from the low-frequency tail by design, since trim words appear at most once per phrase. So the demand on *good* vocabulary does fit — but C consumes essentially all the headroom.
+26,468 exceeds the reviewed 25,000-entry 12dicts core list, although broader permissively licensed sources contain many more raw lemmas. Only the 20,736 normal words need the highest familiarity; the 5,732 trim words can come from the lower-frequency surviving tail because trim words appear at most once per phrase. That arithmetic makes Scheme C testable, not proven: the derivation pipeline must report whether enough acceptable words survive and how far its distance thresholds had to be relaxed.
 
 (A tempting middle road — disjoint normal dictionaries with one shared trim dictionary — turns out not to be worth it. The shared trim set still has to avoid all three normal sets, so it saves just 272 words, and it reintroduces ambiguity exactly where it's hardest to spot: a one-byte payload is a single trim word under both EL-12 and EL-14, carrying no identifying information at all. Full disjointness is the better buy.)
 

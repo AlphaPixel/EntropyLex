@@ -15,7 +15,7 @@ tools/<language>/<implementor-name>/
 - The language folder denotes the implementation language (e.g. `python`).
 - Each implementation lives in a subfolder named for its author (e.g. `satoshi-nakamoto`), exactly as in `src/`.
 
-Multiple independent implementations of the same tool are expected and welcome. They are a cross-check: two derivation pipelines written from this spec, run against the same pinned inputs and the same configuration, must produce **byte-identical** dictionary artifacts. If they do not, either the spec is underspecified or one implementation is wrong, and both outcomes are worth finding out.
+Multiple independent implementations of the same tool are expected and welcome. They are a cross-check: two derivation pipelines run against the same pinned inputs and configuration must produce the same ordered mapping and dictionary fingerprint. The canonical LXJ formatter and LXB compiler must also produce byte-identical files after their formats are finalized. A disagreement means that either the specification is incomplete or one implementation is wrong, and both outcomes are worth finding.
 
 ## The pipeline
 
@@ -25,16 +25,17 @@ Multiple independent implementations of the same tool are expected and welcome. 
 | 2 | `eldict-filter`  | Apply hard disqualifiers; emit surviving candidates with rejection reasons logged |
 | 3 | `eldict-score`   | Compute orthographic, phonetic, and semantic feature vectors for each candidate |
 | 4 | `eldict-select`  | Build the confusability graph and select the final token set to a target count |
-| 5 | `eldict-emit`    | Assign canonical indices, partition normal versus trim, write the dictionary artifact |
-| 6 | `eldict-verify`  | Re-derive metrics from the artifact, assert all invariants, emit a quality report |
+| 5 | `eldict-emit`    | Assign canonical indices, partition normal versus trim, and write the canonical LXJ file |
+| 6 | `eldict-compile` | Compile LXJ into optional LXB without changing the mapping or fingerprint |
+| 7 | `eldict-verify`  | Verify structure from dictionary files and quality/reproducibility from pinned inputs; emit a JSON report |
 
-Every stage is deterministic given its inputs and a recorded configuration file. Source corpora must be pinned to a specific version and recorded in the artifact's provenance header.
+Every stage is deterministic given its inputs and a recorded configuration file. Source datasets must be pinned to immutable versions, checksummed, and recorded as structured source objects in LXJ. The reviewed source candidates and their license conditions are listed in `../data/dict/SOURCES.md`.
 
-Stage 3 is deliberately metric-pluggable: a Chinese dictionary swaps the distance families for visual and romanization metrics and leaves stages 1, 2, 4, 5, and 6 untouched. See SPEC.md section 12.4.
+Stage 3 is deliberately metric-pluggable: a Chinese dictionary swaps the distance families for visual and romanization metrics and leaves stages 1, 2, 4, 5, 6, and 7 untouched. See SPEC.md section 12.4.
 
 ## Outputs
 
-Derived dictionary artifacts belong in `data/dict/`, not here. Tools are inputs to the repository; dictionaries are outputs.
+Derived LXJ, LXB, and verification reports belong in `data/dict/`, not here. Tools are inputs to the repository; dictionaries are outputs. LXJ is authoritative and LXB is reproducibly generated from it.
 
 ## Open design question
 
@@ -44,6 +45,8 @@ The composition of the EL-8, EL-12, and EL-14 dictionaries relative to one anoth
 
 - SPEC.md section 10 — word selection criteria
 - SPEC.md section 11 — dictionary derivation, stage by stage
-- SPEC.md section 11.7 — artifact format, provenance, and the verifier's required assertions
+- SPEC.md section 11.7 — LXJ/LXB formats, provenance, and verification boundaries
 - SPEC.md section 11.8 — the undecided cross-profile composition question
 - SPEC.md section 12 — non-English and ideographic dictionaries
+- `../data/dict/FORMAT.md` — working file-format design
+- `../data/dict/SOURCES.md` — candidate datasets, licenses, and counts
