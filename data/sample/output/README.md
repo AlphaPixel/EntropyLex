@@ -1,10 +1,10 @@
 # Sample outputs
 
-Encoded forms of the payloads in `../input/`, for eyeballing and for documentation examples.
+This folder will contain EntropyLex phrases generated from the sample input files in `../input/`.
 
-These are illustrative, not authoritative. The authoritative round-trip data is the test vector set in `tests/vectors/` — that is what implementations must agree on. Sample outputs exist so a human can look at a real phrase and see what the encoding actually feels like to read aloud.
+These files are illustrations, not compatibility tests. The shared test cases in `tests/vectors/` provide exact inputs and expected outputs that implementations must match. Sample phrases instead let readers see the phrase length and judge how an actual output looks and sounds.
 
-Nothing here yet: sample outputs cannot be generated until a dictionary exists.
+No phrase files exist yet because no completed dictionary exists.
 
 ## Naming
 
@@ -12,7 +12,7 @@ Nothing here yet: sample outputs cannot be generated until a dictionary exists.
 <input-basename>.<profile>.<dictionary-id>.txt
 ```
 
-For example `cat_8x8_4-60bytes.el14.en-14-v1.txt`. The dictionary identity must be part of the filename, because the same payload under the same profile produces a completely different phrase under a different dictionary.
+For example: `cat_8x8_4-60bytes.el14.en-14-v1.txt`. The filename includes the dictionary identifier because changing the index-to-word mapping changes the phrase even when the payload and profile remain the same. The exact dictionary fingerprint must be recorded in an accompanying machine-readable record or document; the short filename identifier is not a substitute for it.
 
 ## Expected token counts for the current sample input
 
@@ -25,4 +25,4 @@ For example `cat_8x8_4-60bytes.el14.en-14-v1.txt`. The dictionary identity must 
 | EL-14 | 35 | 4 |
 | EL-16 | 30 | 0 |
 
-Note that this payload lands on `r = 0` for every profile except EL-14, so it exercises trim-token logic only under EL-14. It is not a substitute for the test vectors, which cover every remainder class.
+Here `r` is the number of payload bits left after all complete normal tokens. For this sample, `r = 0` in every profile except EL-14, so only EL-14 ends with a trim token. The shared tests use several payload lengths to cover every possible remainder group.

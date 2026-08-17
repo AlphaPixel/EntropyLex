@@ -1,26 +1,26 @@
-# Conformance vectors
+# Shared specification test cases
 
-Language-agnostic test data that every EntropyLex implementation must pass.
+These JSON test cases specify exact inputs and expected outputs. Every implementation must pass the cases for the profiles and file formats it claims to support.
 
-## Two classes of vector
+## Two kinds of test case
 
-**Dictionary-independent vectors** express the expected result as a sequence of **token indices** rather than words. Because the bitstream packing, remainder arithmetic, trim classification, and validation rules are all defined over indices (SPEC.md sections 4.3, 5.1, 6, 7), these vectors test the entire encoding mechanism without reference to any particular dictionary.
+**Dictionary-independent cases** express the expected result as numerical token indices rather than words. The specification defines bit grouping, the number of remaining bits, normal-versus-trim index ranges, and validation in terms of these indices (SPEC.md sections 4.3, 5.1, 6, and 7). These cases can therefore test the encoding algorithm before words have been selected.
 
-This matters for sequencing: **the full conformance suite for the encoding logic can be written now, before a single word has been chosen.** Dictionary derivation and implementation are independent tracks, and neither blocks the other.
+The encoding test cases can be written before a dictionary exists. Dictionary selection and implementation can therefore proceed independently.
 
-**Dictionary-dependent vectors** express the expected result as an actual phrase and are pinned to a specific dictionary fingerprint. They test dictionary loading, canonical form, and input normalization (SPEC.md sections 5.2, 5.3, 11.7). The same vectors must pass when a dictionary is loaded from LXJ or its matching LXB. These cannot be authored until dictionaries exist.
+**Dictionary-dependent cases** include actual phrases and name the exact dictionary fingerprint they require. They test file loading, the one written form an encoder must produce, and the permitted variations a decoder accepts (SPEC.md sections 5.2, 5.3, and 11.7). Each case must pass when the dictionary is loaded from LXJ or from its matching LXB. These cases cannot be completed until dictionaries exist.
 
 ## Required coverage
 
-### Remainder classes
+### Remainder groups
 
-Every reachable remainder must be exercised in every profile. There is a convenient result here:
+Every possible remaining-bit length must appear in the tests for each profile:
 
-> **Payloads of N = 0 through 7 bytes exercise every remainder class in every defined profile.**
+> **Payloads of N = 0 through 7 bytes exercise every remainder group in every defined profile.**
 
-EL-14's remainder cycles with `N mod 7` — 0, 8, 2, 10, 4, 12, 6, back to 0 — so eight payloads of ascending length cover all seven classes. EL-12 (cycle length 3) and EL-16 (cycle length 2) are subsumed. Eight small payloads give complete trim coverage across the whole family.
+For EL-14, the remainder repeats according to `N mod 7`, where `mod` means the remainder after division. For payload lengths 0 through 7, the sequence is 0, 8, 2, 10, 4, 12, 6, then 0 again. EL-12 repeats every three byte lengths and EL-16 every two, so their complete cycles also occur within 0 through 7. These eight lengths therefore cover every trim group in every defined profile.
 
-Worked example, payload bytes `a5 5a 3c c3 0f f0 99` truncated to length N:
+The following example uses the byte sequence `a5 5a 3c c3 0f f0 99`. Row `N` uses only its first `N` bytes:
 
 | N | Payload | `r` | Expected EL-14 indices |
 |---|---|---|---|
@@ -42,49 +42,53 @@ The same payloads under EL-12 and EL-8:
 | 2 | 4 | `[2645, 4106]` | `[165, 90]` |
 | 3 | 0 | `[2645, 2620]` | `[165, 90, 60]` |
 
-Note the N = 7 EL-14 row: four tokens, all normal, no trim token. That is the `r = 0` case, and it is the one where a phrase legitimately ends on a normal token.
+For `N = 7` under EL-14, all four tokens are normal because no bits remain after the final complete 14-bit group. This is a required successful case; a phrase does not always end with a trim token.
 
-### Negative vectors
+### Required rejection and acceptance cases
 
-Validation rules D1 through D5 (SPEC.md section 7.3) each need at least one sequence that must be **rejected**:
+Rules D1 through D4 in SPEC.md section 7.3 describe invalid conditions. Each needs at least one sequence that the decoder must reject:
 
-- A token index outside the dictionary
+- A token index outside the dictionary (D1)
 - A trim token in a non-final position (D2)
 - A token sequence whose total bit length is not divisible by 8 (D3) — for EL-14, any run of normal tokens whose count is not a multiple of 4
 - A trim token claiming a remainder outside the profile's remainder set (D4)
 
-An implementation that decodes these without error is not conformant. Silent acceptance of malformed input is the failure mode this format can least afford.
+Rule D5 is different: it requires an empty token sequence to be accepted and decoded as an empty payload. It therefore needs a successful test rather than a rejection test.
 
-### Round-trip
+An implementation that accepts a D1–D4 case or rejects the D5 empty case does not conform to the specification.
 
-Encode-then-decode must reproduce the input exactly, for every vector, in every supported profile. Decode-then-encode must reproduce the canonical phrase exactly.
+### Exact conversion in both directions
+
+For every successful test, encoding followed by decoding must reproduce the original bytes exactly. Decoding followed by encoding must produce the canonical phrase exactly, even when the input phrase used another permitted spacing or letter-case form.
 
 ## Format
 
-JSON, one file per vector set, UTF-8, LF endings. Proposed shape **(provisional — settle when the first set is authored)**:
+Use JSON with one file per test set, UTF-8 text encoding, and line-feed (`LF`) characters to end lines. The proposed structure is **provisional** and must be settled when the first set is written:
 
 ```json
 {
-  "vector_set": "core-roundtrip",
+  "test_set": "core-encode-decode",
   "version": 1,
   "dictionary_independent": true,
-  "vectors": [
+  "cases": [
     {
       "id": "el14-n02",
       "profile": "EL-14",
       "payload_hex": "a55a",
       "indices": [10582, 16386],
       "remainder": 2,
-      "note": "r=2 trim class"
+      "note": "r=2 trim group"
     }
   ]
 }
 ```
 
-Dictionary-dependent sets add `"dictionary": "entropylex-en-14-v1"`, `"dictionary_fingerprint": "sha256:..."`, and `"fingerprint_recipe": "..."` at the top level, and `"phrase"` per vector. `dictionary_fingerprint` identifies the mapping and decoding behavior; it is not the ordinary checksum of either the LXJ or LXB file.
+`payload_hex` writes each payload byte as two hexadecimal digits, so `a55a` represents the two bytes `a5 5a`. `indices` is the expected ordered list of numerical token indices.
 
-Separate malformed-file fixtures are required for both formats. LXJ fixtures cover invalid schema, counts, UTF-8/Unicode policy, duplicates, token order, and fingerprint mismatch. LXB fixtures additionally cover truncation and invalid section lengths or offsets. Every valid LXJ/LXB pair must be checked for exact agreement at every token index.
+Dictionary-dependent sets add `"dictionary": "entropylex-en-14-v1"`, `"dictionary_fingerprint": "sha256:..."`, and `"fingerprint_recipe": "..."` once for the entire set, plus `"phrase"` in each case. The fingerprint recipe identifies the version of the calculation rules. `dictionary_fingerprint` identifies the index mapping and written-token rules; it is not a checksum over all bytes of either the LXJ or LXB file.
 
-## Provenance
+Separate deliberately invalid files are required for both formats. LXJ cases cover missing or wrongly typed fields, incorrect counts, invalid UTF-8 or Unicode normalization, duplicate tokens, incorrect order, and fingerprint mismatch. LXB cases also cover files that end early and section lengths or starting positions that point outside the file. For every valid LXJ/LXB pair, tests must compare the token and behavior at every index.
 
-The index values above were computed directly from the specification (MSB-first packing, unified index space per section 4.3) and independently verified. Any implementation disagreeing with them has found either a bug in itself or an ambiguity in the spec — both are worth reporting.
+## How the example indices were obtained
+
+The index values above were calculated from the specification's highest-value-bit-first order and the continuous index ranges in section 4.3, then checked with a separate calculation. A disagreement may reveal an implementation error or an ambiguous rule in the specification; report enough detail to determine which.
