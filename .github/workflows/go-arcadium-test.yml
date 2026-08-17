@@ -1,9 +1,9 @@
-name: test
+name: go-arcadium-test
 
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
       - '**'
@@ -15,6 +15,10 @@ jobs:
         go: [ '1.26.x' ]
 
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./go/arcadium
 
     steps:
     - name: checkout code
@@ -30,8 +34,8 @@ jobs:
 
     - name: lint
       run: |
-        cd go/arcadium && make lint
+        make lint
 
     - name: test
       run: |
-        cd go/arcadium && make test
+        make test
