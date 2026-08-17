@@ -1,0 +1,44 @@
+{
+  "test_set": "el8-test-v1",
+  "version": 1,
+  "dictionary_independent": false,
+  "dictionary": "entropylex-en-8-test",
+  "dictionary_version": 1,
+  "dictionary_fingerprint": "191b8d6b489c54f99dfdab3d09de03b3f6f64d9859fc668fba1da48f6d52fd7f",
+  "fingerprint_recipe": "LXFP-1",
+  "cases": [
+    {
+      "id": "empty",
+      "profile": "EL-8",
+      "payload_hex": "",
+      "indices": [],
+      "phrase": "",
+      "accepted_phrases": [
+        "",
+        " \t\r\n--"
+      ]
+    },
+    {
+      "id": "selected-boundaries",
+      "profile": "EL-8",
+      "payload_hex": "00010f10ff",
+      "indices": [0, 1, 15, 16, 255],
+      "phrase": "able about album baker power",
+      "accepted_phrases": [
+        "able about album baker power",
+        " ABLE-about\tALBUM\r\nbaker--POWER "
+      ]
+    },
+    {
+      "id": "shared-sample-prefix",
+      "profile": "EL-8",
+      "payload_hex": "a55a3c",
+      "indices": [165, 90, 60],
+      "phrase": "kick first dream",
+      "accepted_phrases": [
+        "kick first dream",
+        "KICK-FIRST-DREAM"
+      ]
+    }
+  ]
+}

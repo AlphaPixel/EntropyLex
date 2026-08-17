@@ -1,0 +1,6 @@
+# Dictionary artifacts and their hashed fixture inputs require stable bytes.
+*.lxj text eol=lf
+data/dict/*.json text eol=lf
+tests/fixtures/dict/*.json text eol=lf
+tests/fixtures/dict/*.txt text eol=lf
+tests/vectors/*.json text eol=lf

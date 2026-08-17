@@ -1,6 +1,6 @@
 # Dictionaries
 
-This folder will hold EntropyLex dictionary files and their verification reports. It currently contains no completed dictionaries.
+This folder will hold production EntropyLex dictionary files and their verification reports. It currently contains no completed production dictionary. A complete test-only EL-8 fixture lives under [`../../tests/fixtures/dict/`](../../tests/fixtures/dict/) so early implementations have a stable file without implying that its words passed production review.
 
 Dictionaries are outputs of the selection tools under `tools/`. Except for possible manual review of EL-8, they are not selected or edited by hand. Running the recorded tool version with the exact recorded source files and settings must reproduce the same ordered mapping. A mismatch means that the file, implementation, settings, or specification needs investigation.
 
@@ -17,11 +17,11 @@ For example, `entropylex-en-14-v1.lxj` is the required JSON form of version 1 of
 
 ## Format
 
-**LXJ** (`.lxj`) is the authoritative, human-readable JSON file. **LXB** (`.lxb`) is generated from LXJ and is intended for implementations whose measurements show that JSON loading is too slow. Implementations must support LXJ. LXB remains optional while its version 1 byte layout is being measured and finalized.
+**LXJ** (`.lxj`) is the authoritative, human-readable JSON file. LXJ version 1 now has exact fields, validation rules, canonical writing rules, and fingerprint recipe LXFP-1. **LXB** (`.lxb`) will be generated from LXJ and is intended for implementations whose measurements show that JSON loading is too slow. Implementations must support LXJ. LXB remains optional while its version 1 byte layout is measured and defined.
 
 Both forms carry the same dictionary fingerprint because they assign the same token to every index and use the same written-token rules. A checksum over every file byte differs because the JSON and binary bytes are different.
 
-See [FORMAT.md](FORMAT.md) for the working design, the plain-language fingerprint definition, what a file can verify by itself, and the remaining format decisions.
+See [FORMAT.md](FORMAT.md) for the normative LXJ v1 definition, the plain-language fingerprint explanation, the exact LXFP-1 byte recipe, and the remaining LXB decisions. [`lxj-v1.schema.json`](lxj-v1.schema.json) provides the machine-readable structural rules.
 
 ## Expected contents, once built
 
@@ -50,4 +50,5 @@ The JSON report from `eldict-verify` belongs next to the dictionary and uses the
 - SPEC.md section 11 — dictionary selection, file generation, source history, and verification
 - `tools/README.md` — the tooling that produces these files
 - `FORMAT.md` — LXJ, LXB, fingerprints, and what each verification type can establish
+- `lxj-v1.schema.json` — machine-readable LXJ v1 structural validation
 - `SOURCES.md` — candidate input datasets, licenses, and counts

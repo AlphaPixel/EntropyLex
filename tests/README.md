@@ -9,12 +9,13 @@ An implementation keeps tests of its own internal functions next to its code und
 ## Layout
 
 ```
-tests/vectors/     JSON test cases for successful conversion and required rejection behavior
+tests/fixtures/dict/  Complete dictionary files and their exact construction inputs
+tests/vectors/        JSON test cases for successful conversion and required rejection behavior
 ```
 
 The folder retains the common name **test vector**, meaning a fixed input with its expected result. Its README generally uses the plainer term **test case**.
 
-Some test cases will use actual words from a specific dictionary. Each such case must pass when that dictionary is loaded from authoritative LXJ or from its matching LXB. Deliberately invalid dictionary files and tests that compare LXJ with LXB belong under `tests/vectors/` once both file layouts are final.
+Some test cases use actual words from a specific dictionary. The first valid fixture is `fixtures/dict/entropylex-en-8-test-v1.lxj`, a 256-entry LXJ v1 dictionary for EL-8 loader and byte-conversion work. Each dictionary-dependent case must pass when its dictionary is loaded from authoritative LXJ or, after LXB is defined, from its matching binary form. Deliberately invalid LXJ files belong under `tests/fixtures/dict/invalid/`; corresponding LXB cases will follow after that layout is defined.
 
 ## What implementations are expected to do
 

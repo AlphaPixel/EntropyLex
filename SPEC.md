@@ -192,7 +192,7 @@ Trim tokens may appear only as the final token. The normal and trim parts cannot
 
 For EL-8 the trim part is empty, so these requirements have no effect.
 
-### 4.3 One continuous index range **(provisional)**
+### 4.3 One continuous index range
 
 LXJ and LXB store one ordered token list. Normal and trim tokens therefore use one continuous range of indices:
 
@@ -240,22 +240,22 @@ This ordering applies to all profiles and is not configurable.
 ### 5.2 Canonical phrase form
 The canonical written form is the one form an encoder must produce. It places the tokens in order with one ordinary space (ASCII U+0020) between them and no space before the first or after the last. Tokens use the letter case and Unicode Normalization Form C (NFC) recorded by the dictionary. NFC gives canonically equivalent Unicode character sequences one standard representation.
 
-### 5.3 Input normalization for decoding **(provisional)**
-For human-entered phrases, a dictionary may permit more than the canonical single-space form. The dictionary must record the exact recognition steps and their order; implementations must not rely on whatever a programming language happens to classify as whitespace, a hyphen, or a letter-case equivalent.
+### 5.3 Input normalization for decoding
+For human-entered phrases, a dictionary may permit more than the canonical single-space form. The dictionary records the exact recognition steps and their order; implementations must not rely on whatever a programming language happens to classify as whitespace, a hyphen, or a letter-case equivalent.
 
-The intended English behavior is:
+LXJ version 1 defines this sequence:
 
-1. Convert the complete input to Unicode NFC.
-2. Apply the letter-case conversion named by the dictionary. The first English dictionary is expected to use ASCII lowercase, avoiding language-dependent Unicode case rules.
-3. Treat any nonempty run of declared separator characters as one token boundary. The initial separator set is expected to include ASCII space, tab, carriage return, line feed, and hyphen-minus; the final set remains to be decided.
+1. Convert the complete input to Unicode 15.1.0 NFC, the version pinned by LXJ v1.
+2. Apply the case algorithm named by the dictionary. `none` makes no change. `ascii-lower` changes only ASCII `A` through `Z` to `a` through `z` and leaves all other Unicode code points unchanged.
+3. Treat any nonempty run of the dictionary's explicitly listed separator code points as one token boundary.
 4. Ignore separators before the first token and after the last token.
 5. Look up each resulting token without further alteration.
 
-The final format must list separator code points explicitly and name an exact case-conversion algorithm. A token cannot contain a character that the same dictionary treats as a separator.
+The initial English dictionary uses `ascii-lower` and exactly horizontal tab (U+0009), line feed (U+000A), carriage return (U+000D), space (U+0020), and hyphen-minus (U+002D) as input separators. A token cannot contain a separator declared by the same dictionary. The encoder always uses one U+0020 space between tokens regardless of the larger set accepted on input.
 
 Decoders must not silently correct spelling or replace an unknown token with the closest known token. If a token is absent from the dictionary, decoding fails. A separate, clearly labeled suggestion feature is permitted, but the normal decoding operation must never apply a suggestion automatically.
 
-For a dictionary whose tokens each contain the same fixed number of written units (see section 12), a phrase may omit separators. The dictionary must say whether one unit means one Unicode code point or one extended grapheme cluster, which is a base character together with any combining marks displayed as one user-perceived character. Its decoder divides the phrase by that declared unit and count rather than relying on spaces. The specification must settle this choice before a separator-free dictionary is published.
+LXJ version 1 supports separator-delimited dictionaries only. A later format version may permit a phrase to omit separators when every token contains the same fixed number of written units (see section 12). That version must say whether one unit means one Unicode code point or one extended grapheme cluster, which is a base character together with any combining marks displayed as one user-perceived character.
 
 ### 5.4 Empty payload
 A zero-byte payload encodes to a zero-token phrase, whose canonical written form is the empty string. A zero-token phrase decodes to a zero-byte payload. If a decoder accepts leading and trailing separators under section 5.3, input containing only those separators also normalizes to the legal empty phrase.
@@ -415,7 +415,7 @@ The tools form a pipeline: each numbered stage consumes recorded inputs and prod
 | 6 | `eldict-compile` | Convert LXJ into the optional LXB binary form without changing its mapping, rules, or fingerprint |
 | 7 | `eldict-verify`  | Check file structure and, when source inputs are supplied, repeat quality checks and write a report |
 
-Every stage must be deterministic. Byte-for-byte identical source files and identical settings must produce the same ordered mapping and dictionary fingerprint. The canonical LXJ writer and eventual LXB compiler must also produce byte-for-byte identical files.
+Every stage must be deterministic. Byte-for-byte identical source files and identical settings must produce the same ordered mapping and dictionary fingerprint. Canonical LXJ writers must produce byte-for-byte identical files. The eventual LXB compiler will have the same requirement once the binary layout is defined.
 
 ### 11.2 Stage 1 — ingest
 
@@ -491,7 +491,7 @@ The tools do not have to prove that no better set exists. They must use a precis
 
 1. Sort the selected words from most to least frequent.
 2. Assign the most frequent 2^w tokens to the normal dictionary and the remainder to the trim dictionary, per section 9.
-3. Within each group, first apply the dictionary's required Unicode normalization and letter case. Then compare token strings one code point at a time, using the number Unicode assigns to each character. At the first difference, the smaller number sorts first; if one token is a complete prefix of the other, the shorter token sorts first. This produces one required order across implementations.
+3. Within the normal part and, separately, within the complete trim part, first apply the dictionary's required Unicode normalization and letter case. Then compare token strings one code point at a time, using the number Unicode assigns to each character. At the first difference, the smaller number sorts first; if one token is a complete prefix of the other, the shorter token sorts first. Remainder-group boundaries divide the sorted trim part into index ranges; they do not restart sorting. This produces one required order across implementations.
 4. Assign indices using the continuous ranges in section 4.3.
 
 Sorting by written form rather than frequency makes changes easier to review with ordinary file-comparison tools. Adding or removing a token changes a nearby run of indices instead of reordering tokens throughout the file when frequency measurements change slightly.
@@ -507,13 +507,13 @@ For example: `entropylex-en-14-v1.lxj` and `entropylex-en-14-v1.lxb`, stored und
 
 An LXB file is generated only from LXJ. A **file checksum** is a SHA-256 value calculated from every byte in one particular file, so the JSON and binary files have different checksums. They must nevertheless have the same **dictionary fingerprint** and assign exactly the same token to every index because they describe the same dictionary behavior. Implementations must support LXJ. LXB support is optional until its version 1 byte layout is final.
 
-LXJ contains one token array. Each token's array position is its index from section 4.3. The file also records the profile, token counts, rules for recognizing written tokens, structured source information, a checksum of the selection settings, and the dictionary fingerprint. It must not repeat the index inside every token entry because that second copy could disagree with the array position.
+LXJ version 1 contains one token array. Each token's array position is its index from section 4.3. The file also records the profile and its counts, language and writing system, exact rules for recognizing written tokens, structured source information, a checksum of the selection settings, and the dictionary fingerprint. It does not repeat the index inside every token entry because that second copy could disagree with the array position. The exact properties, types, limits, and additional validation rules are defined in [`data/dict/FORMAT.md`](data/dict/FORMAT.md) and the machine-readable [`data/dict/lxj-v1.schema.json`](data/dict/lxj-v1.schema.json).
 
-The **dictionary fingerprint** is a SHA-256 identifier answering: “Would these dictionary files interpret every valid phrase in exactly the same way?” It covers the profile, index assignment, written-form rules such as case and separator handling, and every token in index order. It excludes JSON indentation, property order, comments, timestamps, source URLs, and quality reports because changing those does not change phrase decoding.
+The **dictionary fingerprint** is a SHA-256 identifier answering: “Do these files declare the same language and writing system and interpret every valid phrase in exactly the same way?” It covers the profile, language and script identity, index assignment, written-form rules such as case and separator handling, and every token in index order. It excludes the dictionary's display name and release labels, JSON indentation and property order, source locations, and quality reports because changing those does not change dictionary identity or decoding behavior.
 
-SHA-256 operates on bytes. The exact byte sequence supplied to it is called the **fingerprint input**. This specification will define that sequence separately from both JSON and binary file layout so formatting differences do not change dictionary identity. Each string will be preceded by its UTF-8 byte count, which makes adjacent values unambiguous: `["ab", "c"]` cannot produce the same input as `["a", "bc"]`. The exact version 1 recipe remains to be specified.
+SHA-256 operates on bytes. The exact byte sequence supplied to it is called the **fingerprint input**. Recipe `LXFP-1` defines that sequence independently of both JSON and binary layout so formatting differences do not change dictionary identity. It writes behavior fields in one fixed order, writes integers as four highest-byte-first bytes, and precedes each UTF-8 string with its byte count. The counts make adjacent values unambiguous: `["ab", "c"]` cannot produce the same input as `["a", "bc"]`. `FORMAT.md` section 6 gives the complete byte-for-byte recipe.
 
-LXJ records labels for language and writing system. A label by itself does not affect decoding and therefore does not affect the fingerprint. Any behavior associated with it—such as letter-case matching, division into written tokens, or logical order for a right-to-left script—does affect the fingerprint.
+LXJ records language and writing-system identities in `dictionary.language` and `dictionary.script`. LXFP-1 includes both values, so two dictionaries making different identity claims have different fingerprints even if their current tokens and matching rules are otherwise identical.
 
 Recalculating a fingerprint proves only that the file is internally consistent with the fingerprint it contains. Detecting replacement requires the application to compare it with an expected fingerprint obtained separately from a trusted release record or application setting. A fingerprint does not cryptographically prove who published the file. Releases may also publish a checksum for each exact LXJ and LXB file to detect accidental byte changes or replacement.
 
@@ -532,7 +532,7 @@ Without using the original source datasets, `eldict-verify` can check the follow
 
 The final dictionary cannot by itself establish that its words are familiar, sufficiently different in pronunciation or meaning, or produced by the stated selection process. Checking those claims requires the exact source datasets and settings used for selection. The quality report must identify those inputs by name and checksum, show how many candidates survived each required filter, report the smallest measured distances, and list the selected pairs closest to the allowed limits.
 
-The detailed working design and remaining decisions are in [`data/dict/FORMAT.md`](data/dict/FORMAT.md).
+The normative LXJ v1 definition and remaining LXB decisions are in [`data/dict/FORMAT.md`](data/dict/FORMAT.md). A complete test-only EL-8 file is in [`tests/fixtures/dict/entropylex-en-8-test-v1.lxj`](tests/fixtures/dict/entropylex-en-8-test-v1.lxj).
 
 ### 11.8 Whether profiles share tokens — UNDECIDED
 
@@ -668,7 +668,7 @@ For this reason, stage 3 of the derivation pipeline must allow each dictionary t
 - A Chinese dictionary must declare whether it uses simplified or traditional characters. Two variant forms of the same character must not both appear. Converting one writing system to the other requires a separately selected dictionary and fingerprint because conversion can change distinctions between tokens.
 - Letter-case conversion does not apply to writing systems without uppercase and lowercase. Decoders must apply only the case behavior declared by the dictionary.
 - A dictionary for a right-to-left writing system must define its phrase as a logical sequence of tokens in encoding order. Display software may render that sequence from right to left, but a decoder must recover the logical order and must not simply reverse what appears on screen. Any required direction-control characters and their treatment must be specified before such a dictionary is published.
-- Every dictionary records its language and writing system. The fingerprint covers the actual behavior needed to recognize and decode its phrases, such as normalization, case handling, division into character tokens, and logical token order. A descriptive language label alone is not treated as decoding behavior.
+- Every dictionary records its language and writing system. LXFP-1 includes those identities as well as the behavior needed to recognize and decode phrases, such as normalization, case handling, token boundaries, and logical token order.
 
 ### 12.6 References for the figures in this section
 
@@ -754,6 +754,7 @@ This draft describes the current encoding and decoding behavior, profile family,
 
 - The dictionary derivation tools described in section 11, which do not yet exist
 - Finalized dictionary selection for each profile
+- Production dictionaries. LXJ version 1, fingerprint recipe LXFP-1, and a 256-entry test-only EL-8 dictionary are defined, but the test words have not passed the production selection review.
 - Published test cases per profile, including an empty payload, every remainder group, and known-invalid sequences. These live in `tests/vectors/` as JSON shared by implementations in every programming language.
 
   Tests represented as **token index sequences** do not depend on selected words because sections 4.3, 5.1, 6, and 7 define the encoding in terms of indices. Encoding tests can therefore be written before a dictionary exists. Payload lengths from `N = 0` through `N = 7` bytes collectively exercise every possible remainder in every defined profile. For EL-14, the remainder sequence is 0, 8, 2, 10, 4, 12, 6, then back to 0; the shorter EL-12 and EL-16 cycles also occur within that range.
@@ -762,6 +763,6 @@ This draft describes the current encoding and decoding behavior, profile family,
 - Optional error detection schemes
 - Optional application interfaces for various programming languages
 - Optional payload compression or preprocessing guidelines, performed before EntropyLex encoding and reversed after decoding
-- Final LXJ JSON field structure, fingerprint input, and LXB byte layout chosen after measurements; see `data/dict/FORMAT.md`
+- The LXB byte layout, chosen after measurements against the now-defined LXJ v1 baseline; see `data/dict/FORMAT.md`
 - License decision and exact releases for the candidate source data recorded in `data/dict/SOURCES.md`
 - **Resolution of the shared-token question in section 11.8**—nested sets, independent selection, or separate sets. It must be settled before `eldict-select` is implemented because it changes what sections 3.8, 13.5, and 13.6 can guarantee.

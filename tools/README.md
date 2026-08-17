@@ -15,7 +15,7 @@ tools/<language>/<implementor-name>/
 - The language folder names the programming language used to write the tool, such as `python`.
 - Each implementation lives in a subfolder named for its author (e.g. `satoshi-nakamoto`), exactly as in `src/`.
 
-More than one author may implement the same tool independently. Comparing their output checks both the code and the specification. When given identical source files and settings, implementations must produce the same ordered mapping and dictionary fingerprint. Once the LXJ and LXB layouts are final, the generated files must also match byte for byte. A disagreement indicates an implementation error or a rule that the specification has not defined precisely enough.
+More than one author may implement the same tool independently. Comparing their output checks both the code and the specification. When given identical source files and settings, implementations must produce the same ordered mapping, dictionary fingerprint, and canonical LXJ v1 bytes. Generated LXB files must also match byte for byte after that layout is defined. A disagreement indicates an implementation error or a rule that the specification has not defined precisely enough.
 
 ## The tool sequence
 
@@ -50,5 +50,5 @@ Whether EL-8, EL-12, and EL-14 share any words is **not yet decided**. The alter
 - SPEC.md section 11.7 — LXJ/LXB formats, source history, and what each verification type can establish
 - SPEC.md section 11.8 — the undecided question of whether profiles share tokens
 - SPEC.md section 12 — dictionaries for other languages and writing systems
-- `../data/dict/FORMAT.md` — working file-format design
+- `../data/dict/FORMAT.md` — normative LXJ v1 definition and remaining LXB design
 - `../data/dict/SOURCES.md` — candidate datasets, licenses, and counts

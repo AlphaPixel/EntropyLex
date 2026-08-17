@@ -8,7 +8,18 @@ These JSON test cases specify exact inputs and expected outputs. Every implement
 
 The encoding test cases can be written before a dictionary exists. Dictionary selection and implementation can therefore proceed independently.
 
-**Dictionary-dependent cases** include actual phrases and name the exact dictionary fingerprint they require. They test file loading, the one written form an encoder must produce, and the permitted variations a decoder accepts (SPEC.md sections 5.2, 5.3, and 11.7). Each case must pass when the dictionary is loaded from LXJ or from its matching LXB. These cases cannot be completed until dictionaries exist.
+**Dictionary-dependent cases** include actual phrases and name the exact dictionary fingerprint they require. They test file loading, the one written form an encoder must produce, and the permitted variations a decoder accepts (SPEC.md sections 5.2, 5.3, and 11.7). The first such target is `../fixtures/dict/entropylex-en-8-test-v1.lxj`, with LXFP-1 fingerprint `191b8d6b489c54f99dfdab3d09de03b3f6f64d9859fc668fba1da48f6d52fd7f`. Each case must pass from LXJ and, after LXB is defined, from its matching binary file.
+
+[`el8-test-v1.json`](el8-test-v1.json) supplies the first dictionary-dependent cases: the empty payload, selected index boundaries, the shared `a5 5a 3c` sample, canonical phrases, and accepted case/separator variations.
+
+Here, **decoder** means the EntropyLex phrase decoder, which converts a written token sequence into bytes. It does not mean the JSON parser that loads an LXJ dictionary. For example, the test file requires the phrase decoder to interpret both of these forms as the bytes `00 01 0f 10 ff`:
+
+```text
+able about album baker power
+" ABLE-about\tALBUM\r\nbaker--POWER "
+```
+
+The first line is the canonical encoder output. The second exercises the case and separator variations declared by the dictionary. Its surrounding quotation marks are only delimiters, not part of the input; `\t`, `\r`, and `\n` display a tab, carriage return, and line feed.
 
 ## Required coverage
 
@@ -63,7 +74,7 @@ For every successful test, encoding followed by decoding must reproduce the orig
 
 ## Format
 
-Use JSON with one file per test set, UTF-8 text encoding, and line-feed (`LF`) characters to end lines. The proposed structure is **provisional** and must be settled when the first set is written:
+Use JSON with one file per test set, UTF-8 text encoding, and line-feed (`LF`) characters to end lines. The first EL-8 set uses the structure below. The test-set format remains provisional while the initial implementations establish which diagnostic fields they need; this does not make the LXJ dictionary format provisional:
 
 ```json
 {
@@ -85,7 +96,9 @@ Use JSON with one file per test set, UTF-8 text encoding, and line-feed (`LF`) c
 
 `payload_hex` writes each payload byte as two hexadecimal digits, so `a55a` represents the two bytes `a5 5a`. `indices` is the expected ordered list of numerical token indices.
 
-Dictionary-dependent sets add `"dictionary": "entropylex-en-14-v1"`, `"dictionary_fingerprint": "sha256:..."`, and `"fingerprint_recipe": "..."` once for the entire set, plus `"phrase"` in each case. The fingerprint recipe identifies the version of the calculation rules. `dictionary_fingerprint` identifies the index mapping and written-token rules; it is not a checksum over all bytes of either the LXJ or LXB file.
+Dictionary-dependent successful cases also use `phrase` for the required encoder output and may use `accepted_phrases` for noncanonical input forms that must decode to the same payload. The canonical phrase should be included in `accepted_phrases` when that property is present.
+
+Dictionary-dependent sets add `"dictionary": "entropylex-en-8-test"`, `"dictionary_version": 1`, `"dictionary_fingerprint": "191b8d6b489c54f99dfdab3d09de03b3f6f64d9859fc668fba1da48f6d52fd7f"`, and `"fingerprint_recipe": "LXFP-1"` once for the entire set, plus `"phrase"` in each case. Fingerprint values use 64 lowercase hexadecimal digits without a `sha256:` prefix. `dictionary_fingerprint` identifies the declared language and writing system, index mapping, and written-token rules; it is not a checksum over all bytes of either the LXJ or LXB file.
 
 Separate deliberately invalid files are required for both formats. LXJ cases cover missing or wrongly typed fields, incorrect counts, invalid UTF-8 or Unicode normalization, duplicate tokens, incorrect order, and fingerprint mismatch. LXB cases also cover files that end early and section lengths or starting positions that point outside the file. For every valid LXJ/LXB pair, tests must compare the token and behavior at every index.
 
