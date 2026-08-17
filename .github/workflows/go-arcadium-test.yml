@@ -1,0 +1,39 @@
+name: test
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        go: [ '1.26.x' ]
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: checkout code
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+
+    - name: setup go
+      uses: actions/setup-go@v6
+      with:
+        go-version: ${{ matrix.go }}
+        check-latest: true
+
+    - name: lint
+      run: |
+        cd go/arcadium
+        make lint
+
+    - name: test
+      run: |
+        cd go/arcadium
+        make test

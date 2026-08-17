@@ -39,3 +39,14 @@
 
 # debug information files
 *.dwo
+
+# Go specific files to ignore,
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Go workspace file
+go.work
