@@ -1,0 +1,42 @@
+name: go-arcadium-test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  go-arcadium-test:
+    strategy:
+      matrix:
+        go: [ '1.26.x' ]
+
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: go/arcadium
+
+    steps:
+    - name: checkout code
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+
+    - name: setup go
+      uses: actions/setup-go@v6
+      with:
+        go-version: ${{ matrix.go }}
+        go-version-file: go/arcadium/go.mod
+        check-latest: true
+
+    - name: lint
+      run: |
+        make lint
+
+    - name: test
+      run: |
+        make test
