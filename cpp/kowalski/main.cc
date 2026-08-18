@@ -1,3 +1,4 @@
+#include "entropylex8.h"
 #include <iostream>
 
 int main() {

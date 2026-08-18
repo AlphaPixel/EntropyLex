@@ -31,4 +31,7 @@ target_link_libraries(
 include(GoogleTest)
 gtest_discover_tests(main.test)
 
-add_executable(entropylex main.cc)
+add_executable(entropylex
+  main.cc
+  entropylex8.h
+)
