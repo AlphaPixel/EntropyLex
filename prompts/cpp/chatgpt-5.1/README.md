@@ -1,3 +1,3 @@
-This folder contains the prompt(s) for the specified LLM represented by the folder name.
+This folder contains prompts written specifically for ChatGPT 5.1 and targeting C++ EntropyLex work.
 
-They are each stored in a text file, with the name of the file indicating the prompt purpose.
+Store each prompt in a text file whose filename states the requested task, such as encoder implementation or dictionary-tool review.

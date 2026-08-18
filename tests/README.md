@@ -1,21 +1,26 @@
 # Tests
 
-Shared, language-agnostic conformance data for EntropyLex.
+Shared test data that every EntropyLex implementation can use, regardless of programming language.
 
-The premise of this repository is multiple independent implementations, in multiple languages, by multiple authors. That is only meaningful if there is something concrete for them to agree on. This folder is that something.
+The repository is intended to support independently written implementations in several programming languages. They need common examples with exact expected results so agreement can be measured rather than assumed. Those examples live here.
 
-Implementations keep their own unit tests next to their own code, under `src/<language>/<implementor>/`. What lives here is the shared conformance suite that **every** implementation must pass, regardless of language.
+An implementation keeps tests of its own internal functions next to its code under `src/<language>/<author>/`. This folder instead contains the shared **conformance suite**: tests of externally visible behavior required by the specification. Every implementation must pass the applicable shared tests before it is described as conformant.
 
 ## Layout
 
 ```
-tests/vectors/     Round-trip and validation vectors, as JSON
+tests/fixtures/dict/  Complete dictionary files and their exact construction inputs
+tests/vectors/        JSON test cases for successful conversion and required rejection behavior
 ```
+
+The folder retains the common name **test vector**, meaning a fixed input with its expected result. Its README generally uses the plainer term **test case**.
+
+Some test cases use actual words from a specific dictionary. The first valid fixture is `fixtures/dict/entropylex-en-8-test-v1.lxj`, a 256-entry LXJ v1 dictionary for EL-8 loader and byte-conversion work. Each dictionary-dependent case must pass when its dictionary is loaded from authoritative LXJ or, after LXB is defined, from its matching binary form. Deliberately invalid LXJ files belong under `tests/fixtures/dict/invalid/`; corresponding LXB cases will follow after that layout is defined.
 
 ## What implementations are expected to do
 
-Load the vectors, run them, and report pass or fail per vector. An implementation that has not run the shared vectors should not be described as conformant.
+Load each test case, perform the stated operation, compare the actual result with the expected result, and report pass or fail for that case. An implementation that has not run the applicable shared tests must not be described as conformant.
 
-Vectors are versioned and additive. Adding a vector that an existing implementation fails is a legitimate outcome — it means either the implementation or the specification needed the correction, and both are worth discovering.
+Test sets have version numbers. New cases may be added without changing existing cases. If an existing implementation fails a new case, determine whether the implementation is wrong or the specification was ambiguous and correct the appropriate one.
 
 See `vectors/README.md` for the format and coverage requirements.

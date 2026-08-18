@@ -1,3 +1,3 @@
-This folder contains subfolders for the specified LLM represented by the folder name.
+This folder contains prompts used to ask large language models (LLMs) to produce or review Rust work. Each model has its own subfolder so the exact instructions used for a result can be retained.
 
-Prompts are organized by target language, so this folder covers both the EntropyLex implementations under `src/rust/` and the dictionary derivation tooling under `tools/rust/`. Name the prompt file for its purpose so the two are distinguishable.
+This folder covers both EntropyLex encoders and decoders under `src/rust/` and dictionary-selection tools under `tools/rust/`. Name each prompt file for the task it requests so those purposes are distinguishable.
