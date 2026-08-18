@@ -1,9 +1,9 @@
-This folder will contain EntropyLex tooling implemented in the language denoted by the folder name (e.g. "python").
+This folder will contain EntropyLex dictionary-selection and verification tools written in Rust.
 
-Each implementation will be in a subfolder, named for the author of the implementation. E.g. ("satoshi-nakamoto"). This mirrors the convention used under `src/`.
+Each independently written implementation belongs in a subfolder named for its author, for example `satoshi-nakamoto`. The `src/` tree uses the same organization.
 
-The primary tooling target is the dictionary derivation pipeline (`eldict-ingest`, `eldict-filter`, `eldict-score`, `eldict-select`, `eldict-emit`, `eldict-verify`). Each implementation should state which pipeline stages it covers, and which source corpora and versions it was validated against.
+The planned sequence is `eldict-ingest`, `eldict-filter`, `eldict-score`, `eldict-select`, `eldict-emit`, `eldict-compile`, and `eldict-verify`. The main tools README explains each stage. An implementation must state which stages it provides and the exact source dataset versions used to test it.
 
-Independent implementations must produce byte-identical dictionary artifacts from the same pinned inputs and configuration. That equivalence is the point of allowing more than one.
+Independently written implementations must produce the same mapping, fingerprint, and canonical LXJ v1 bytes from byte-for-byte identical source files and settings. Generated LXB files must also match byte for byte after that layout is defined. Comparing results checks both the implementations and whether the specification is precise enough.
 
-See ../README.md for the pipeline overview and ../../SPEC.md section 11 for the normative requirements.
+See ../README.md for the stage descriptions and ../../SPEC.md section 11 for the requirements implementations must follow.

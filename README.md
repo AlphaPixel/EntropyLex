@@ -1,53 +1,52 @@
-# EntropyLex: A Human-Readable Encoding for High-Entropy Binary Data
+# EntropyLex: A Human-Readable Encoding for Binary Data
 
-EntropyLex is a bidirectional encoding system that converts raw binary data into short sequences of common English words. It exists to make high-entropy information (cryptographic keys, device identifiers, authentication tokens, reference hashes, and other compact binary payloads) memorable, speakable, and recoverable by humans, without sacrificing security.
+EntropyLex is a reversible encoding: it converts a sequence of bytes into dictionary tokens and converts those tokens back into exactly the original bytes. The first planned dictionaries use common English words. Possible payloads include cryptographic keys, device identifiers, authentication tokens, and hash values.
 
-Traditional base encodings (Base32, Base58, hex) optimize for machines, specific transport encodings (ASCII) and purposes (ASCII armoring while maximizing bandwidth by limiting encoding-expansion). They are hard to memorize, error-prone when spoken aloud, and visually ambiguous. 
+In this document, **high-entropy data** means data whose bits are difficult to predict, as cryptographic keys should be. EntropyLex preserves those bits, but it does not encrypt them, hide them, or add error correction. Anyone who can read the phrase and has the correct dictionary can recover the bytes.
 
-EntropyLex reverses the priority: it maps binary data into carefully selected English words chosen for clarity, phonetic distance, and recognizability across accents. This makes the resulting phrases suitable for memorization, transcription, voice communication, and low-tech backup scenarios where humans, not machines, are the bottleneck.
+Hexadecimal, Base32, and Base58 represent bytes with letters and digits. They are compact and convenient for software, but long strings in those formats can be difficult to remember, distinguish visually, or communicate aloud. EntropyLex instead uses carefully selected words intended to be familiar and difficult to confuse in spelling or speech.
 
-The encoding itself is language-neutral — English is the first dictionary, not a requirement of the format — and it is defined as a family of profiles that trade density against complexity. See [Profiles](#profiles).
+The encoding rules do not depend on English. English is simply the first planned language. EntropyLex defines several **profiles**, each of which specifies how many bits one ordinary token represents. Wider profiles use fewer words per payload but require larger dictionaries and more complicated handling of the final token. See [Profiles](#profiles).
 
 ## Why It Exists
 
 EntropyLex solves three persistent problems:
 
-1. Humans cannot reliably handle raw entropy. Hex strings, random characters, and dense base encodings are difficult to memorize or communicate accurately. As a rough working figure, a 10-digit string of numbers like a NANP phone number (555-867-5309) is about all the entropy a human can be trusted to memorize. *(Uncited. This is a rule of thumb, not a measured result, and the familiar 7±2 finding concerns working memory rather than long-term retention. The design does not depend on the exact number — only on the uncontroversial premise that the usable figure is small.)*
+1. Long strings of hexadecimal digits or apparently random characters are difficult to memorize or communicate accurately. EntropyLex does not depend on a particular estimate of human memory capacity; it depends only on words being easier to handle than dense character strings in some situations.
 
-2. Mnemonic systems lack explicit, exact binary mapping. Existing “seed phrase” approaches are designed around specific wallet protocols and often rely on indirect hashing pipelines rather than strict reversible encodings.
+2. Many existing word-based systems belong to a particular application, such as a cryptocurrency wallet recovery format. Their words may include checksums or feed a later key-generation process. EntropyLex instead defines a direct, application-independent mapping between bytes and tokens.
 
-3. There is no general mechanism for turning any short binary payload into a compact, human-manageable phrase. EntropyLex works for *any* 8-bit–symbol binary payload, independent of application or cryptographic scheme.
+3. The same encoding can represent any whole number of bytes. The application does not need a special EntropyLex variant for keys, identifiers, images, or other byte sequences.
 
-Typical use cases include: memorized master keys, offline recovery secrets, secure pairing codes, fixed-entropy identifiers, reference hashes, and low-bandwidth cross-channel transfers where a human must read, write, or speak the data. You could even try to turn your favorite cat GIF into a speakable ballad. The smallest valid 1 pixel GIF is around 34 bytes, which would be about 20 words; the example 8x8 4-color cat GIF in `data/sample/input/` is 60 bytes, or 35 words. *(The 34-byte figure is uncited — commonly quoted minimums vary between roughly 26 and 35 bytes depending on how strictly "valid" is read. It is an illustration, not a specification input. The 60-byte figure is measured from the file itself.)*
+Typical uses include memorized master keys, offline recovery secrets, pairing codes, identifiers, hash values, and transfers in which a person must read, write, or speak the data. EntropyLex can encode files too, although word phrases become unwieldy as the payload grows. For scale, the 60-byte sample GIF under `data/sample/input/` would require 35 EL-14 tokens.
 
 ## How It Works - Conceptual Overview
 
-EntropyLex treats an input as a stream of 8-bit symbols, meaning the payload is always an integer number of bytes. It then transforms that stream into a sequence of word-tokens, each representing a fixed amount of entropy.
+EntropyLex accepts a sequence of bytes. A byte contains eight bits, and a bit is a binary digit with value 0 or 1. The encoder reads those bits in a defined order and replaces groups of bits with dictionary tokens.
 
-The sections below describe the 14-bit design, which is the density-optimized target. EntropyLex is actually a *family* of encodings that differ only in how many bits each word carries — see [Profiles](#profiles) below for the 8-bit and 12-bit variants, which are simpler and are the first implementation targets.
+The sections below first describe EL-14, in which an ordinary token represents 14 bits. It is the target that uses the fewest English words among the profiles currently considered practical. The simpler EL-8 and EL-12 profiles are described under [Profiles](#profiles) and are the first implementation targets.
 
-### 1. Fixed-Entropy Words
+### 1. Normal tokens
 
-The core dictionary contains 16,384 carefully selected English words.  
-Each word corresponds to a unique 14-bit value:
+The normal part of an EL-14 dictionary contains 16,384 carefully selected English words. This count is required because 14 bits have `2^14 = 16,384` possible values. Each dictionary position, called an **index**, corresponds to one of those values:
 
 ```
-index(word) → 14-bit chunk
+14-bit value → dictionary index → word
 ```
 
-Encoding proceeds by concatenating the payload bits and slicing them into 14-bit groups. Each group is mapped directly to a word, producing most of the phrase.
+The encoder places the payload bytes end to end as one bit sequence and divides that sequence into 14-bit groups. It interprets each complete group as a number from 0 through 16,383 and emits the word at that dictionary index. The decoder performs the reverse lookup.
 
-Why 14-bits? There are about 20,000-25,000 root words (the base word without pluralization or conjugation) in common English dictionaries. 15 bits would need about 32,000 (2^15^) dictionary tokens. 14 bits (2^14^=16384) fits well within a 20k token dictionary, with some room to spare.
+Why 14 bits? Published common-word lists and lists reduced to base word forms contain roughly 25,000 to 84,000 entries, while broader lexical databases contain more. A 15-bit normal dictionary alone would need 32,768 tokens. A 14-bit normal dictionary needs 16,384, leaving more candidates to discard because they are rare, offensive, difficult to spell, or too similar to another word. The derivation experiment still has to establish whether enough suitable words remain.
 
 ### 2. Controlled Ending on Byte Boundaries
 
-Because arbitrary binary streams rarely end on a 14-bit boundary, EntropyLex uses special trimming tokens. These words represent *shorter* bit sequences (2 to 12 bits) and appear only as the final token.
+The number of payload bits is not usually divisible by 14. EntropyLex therefore uses **trim tokens** for the 2 to 12 bits that may remain after the last complete 14-bit group. A trim token can appear only at the end of a phrase, and its dictionary position tells the decoder both how many bits it represents and what those bits are.
 
 The encoder:
 
-- Packs the payload into a bitstream, most significant bit first.
+- Reads each byte from its highest-value bit to its lowest-value bit. This is commonly called most-significant-bit-first order.
 - Emits 14-bit words until fewer than 14 bits remain.
-- Maps the remaining 2–12 bits into an appropriate special token that represents a shorter bit sequence. Special short-tokens exist for all "remnant" lengths that can actually occur (see below — only even lengths are reachable). If nothing remains, no trim token is emitted and the phrase simply ends on a normal word.
+- Maps the remaining 2–12 bits to the appropriate trim token. Only even remainder lengths can occur, as explained below. If no bits remain, the phrase ends with a normal word and no trim token is added.
 
 This ensures that decoding reconstructs exactly the original byte-aligned payload without needing a separate length field.
 
@@ -60,25 +59,27 @@ Decoding reverses the process:
 - For the final word, read only the number of bits it indicates.  
 - Reassemble the bits into bytes.
 
-The transformation is fully reversible, deterministic, and carries no lossy semantics or application-specific assumptions.
+The transformation is reversible and deterministic: the same bytes and dictionary always produce the same phrase, and decoding that phrase reproduces the bytes exactly.
 
 ### 4. Trimming tokens
 
-Because we use 14-bit indices to pack as much entropy per word as possible, and the input is in 8-bit symbols, it's possible that the input payload could end in a way that less than 14 bits still need to be encoded. It's not possible to just emit 14 bits and hope the decoder can either guess where the end of payload should be, or that the payload consumer can tolerate garbage padding at the end of the payload. Because the greatest common divisor of the payload symbol size (8 bits) and the token size (14 bits) is 2, every possible leftover is a multiple of 2 bits, so only even-bit-length mismatches are possible. Nonetheless, it is still required that EntropyLex be able to safely transmit a 2, 4, 6, 8, 10, or 12 bit long trimmed token that the decoder will understand how to parse and reconstruct.
+Without a trim token, the encoder would have to add meaningless padding bits to fill the final 14-bit group. The decoder would not know which final bits belonged to the payload. A separate payload-length field could solve that problem, but EntropyLex instead records the remaining bit count in the final token.
 
-An alternative strategy would be to mandate a length header (even just 8 bits) on every message, but since this unilaterally increases every message by 8 bits, this option was discarded. The trimming token method emits no more words than would be necessary for encoding an untrimmed payload with trailing garbage, however it requires the utilization of additional dictionary words to express the shorter trimmed tokens.
+Payload lengths are multiples of 8 bits, while normal EL-14 tokens consume 14 bits. The greatest common divisor of 8 and 14 is 2: it is the largest integer that divides both numbers. Consequently, the possible nonzero remainder lengths are 2, 4, 6, 8, 10, and 12 bits. No odd remainder can occur.
 
-The trimming token dictionary needs a set of tokens to represent all sequences of 12, 10, 8, 6, 4, or 2 bits. Therefore the additional dictionary size is 2^12^+2^10^+2^8^+2^6^+2^4^+2^2^ or 4096+1024+256+64+16+4 = 5,460 extra dictionary words. On top of the 2^14^ base 14-bit tokens (16,384), this makes for a total dictionary size of 21,844. This fits well within dictionaries of common English words that are up to 25000 words. Because they are less frequently used, we will select these words from the least-used words within the dictionary we choose.
+A required length field would add overhead to every encoded payload. Trim tokens instead increase the dictionary size while adding a final token only when bits remain. That trade is part of the EntropyLex design.
+
+Representing every possible value at each remainder length requires `2^12 + 2^10 + 2^8 + 2^6 + 2^4 + 2^2`, or `4,096 + 1,024 + 256 + 64 + 16 + 4 = 5,460`, trim words. Together with the 16,384 normal words, an EL-14 dictionary contains 21,844 tokens. Open sources contain more raw entries, but the derivation pipeline still has to show that 21,844 familiar and sufficiently distinct words remain after filtering. Less-frequent surviving words can be assigned to trim positions because a phrase contains at most one trim token.
 
 ### 5. Summary
 
-EntropyLex provides a general, high-density, human-friendly representation for arbitrary short binary payloads, small enough to memorize, robust enough to speak aloud, and precise enough to encode cryptographic secrets or other critical binary data without structural ambiguity.
+EntropyLex provides an exact, word-based representation for arbitrary short byte sequences. Its dictionaries are intended to make phrases easier to remember, distinguish, and communicate than conventional base-encoded strings. Whether a particular phrase is practical to memorize or speak depends on its length, dictionary quality, and user.
 
 ## Profiles
 
-The 14-bit design above is one member of a family. Everything except the token width `w` is identical across the family: the same bitstream model, the same trimming concept, the same encode and decode algorithms. A profile is named `EL-<w>`.
+The 14-bit design above is one member of a family. A **profile** fixes the normal-token width `w`: the number of payload bits represented by each normal token. Profiles use the name `EL-<w>`, such as EL-12. They otherwise share the same bit order, trim-token method, and encoding and decoding rules.
 
-The width choice drives everything else. With 8-bit input symbols, let `g = gcd(8, w)`. Every possible leftover at the end of the payload is a multiple of `g`, so the trim dictionary only needs to cover remainders `g, 2g, … w-g`:
+The table uses `g = gcd(8, w)`, the greatest common divisor of the eight-bit byte width and the token width. Every possible remainder is a multiple of `g`, so trim tokens are needed only for lengths `g, 2g, …, w-g`.
 
 | Profile | Bits/word | `g` | Remainders | Normal words | Trim words | Total dictionary |
 |---|---|---|---|---|---|---|
@@ -93,94 +94,95 @@ Words needed for a payload:
 |---|---|---|---|---|
 | 16 bytes (128-bit key)     | 16 | 11 | 10 | 8  |
 | 32 bytes (256-bit key)     | 32 | 22 | 19 | 16 |
-| 34 bytes (minimal GIF)     | 34 | 23 | 20 | 17 |
-| 60 bytes (the cat GIF)     | 60 | 40 | 35 | 30 |
+| 60 bytes (the sample GIF)  | 60 | 40 | 35 | 30 |
 
-### EL-8 — no byte splitting at all
+### EL-8 — one byte per token
 
-When the word is 8 bits wide, it is exactly one byte. Nothing is ever split, the leftover is always zero, and **there is no trim dictionary and no trim logic whatsoever**. Encoding is a straight substitution: byte → word, word → byte.
+An eight-bit token represents exactly one byte. No byte crosses a token boundary, there are no remaining bits, and EL-8 needs no trim tokens. Encoding is a direct substitution: byte → word; decoding reverses it.
 
-The dictionary is 256 words. At that size, word selection can be ruthless — every word can be short, common, unambiguous, and phonetically far from every other word in the set, and the whole dictionary can be reviewed by a human in an afternoon. Nothing else in the family can say that. (The PGP Word List is prior art for roughly this shape, and is a useful sanity reference.)
+The dictionary contains 256 words. The small count permits strict selection for short, common words that differ clearly in spelling and pronunciation, and it makes complete human review practical. The Pretty Good Privacy (PGP) Word List is an earlier byte-to-word system and provides a useful comparison.
 
-The price is density: 8 bits per word means a 256-bit key is 32 words instead of EL-14's 19.
+The tradeoff is phrase length: a 256-bit key needs 32 EL-8 words instead of 19 EL-14 words.
 
-EL-8 is the first implementation target. It exercises dictionary loading, tokenizing, normalization, and the round-trip test harness with none of the bit-packing complexity.
+EL-8 is the first implementation target. It tests dictionary loading, splitting a phrase into tokens, applying written-form rules, and verifying encode-then-decode behavior without requiring groups of bits to cross byte boundaries.
 
-### EL-12 — splits bytes only in half
+### EL-12 — token boundaries occur at whole or half bytes
 
-At 12 bits, `g = 4`, so the bitstream only ever breaks on **nibble boundaries**. Every word boundary lands on a whole byte or a half byte, which is easy to reason about, easy to debug, and easy to eyeball against a hex dump.
+At 12 bits, `g = 4`, so a token boundary occurs only at a whole byte or after four bits of a byte. A four-bit half-byte is sometimes called a **nibble**. These boundaries are easy to compare with hexadecimal notation, where each digit also represents four bits.
 
-Only two leftover sizes exist, 4 and 8 bits, so the trim dictionary is 272 words instead of 5,460 — small enough to print. The whole dictionary is 4,368 words, which can be drawn entirely from high-frequency core vocabulary, so every word is one a person actually knows.
+Only two nonzero remainder lengths exist, 4 and 8 bits, so the trim portion contains 272 words instead of EL-14's 5,460. The whole EL-12 dictionary contains 4,368 words. Source lists appear large enough to support a very familiar vocabulary at this size, but the derivation pipeline must confirm the result after all filters are applied.
 
-The density cost is modest: 12 bits per word is 86% of EL-14, for a fifth of the dictionary.
+An EL-12 normal word represents 12 bits, about 86 percent of EL-14's 14 bits, while the complete dictionary is one-fifth the size.
 
-EL-12 is the second implementation target. It exercises the complete mechanism — bitstream packer, remainder arithmetic, trim dictionary, alignment check — that EL-14 needs, while keeping every intermediate value checkable by hand.
+EL-12 is the second implementation target. It adds every mechanism EL-14 needs: grouping bits across byte boundaries, calculating the remaining-bit count, using trim tokens, and rejecting results that do not reconstruct a whole number of bytes. Its intermediate values remain small enough to check by hand.
 
 ### EL-14 — the reference profile
 
-The density-optimized target described in the sections above, and the default meaning of "EntropyLex" when no profile is stated. It needs the full apparatus: six trim classes, 5,460 trim words, and a 21,844-word dictionary that pushes to the edge of usable common English.
+EL-14 is the target that minimizes the number of English tokens among the profiles currently considered plausible. It is also the default profile when a discussion says “EntropyLex” without naming one. It needs six remainder-length groups, 5,460 trim words, and 21,844 words in total. Whether enough suitably familiar and distinct English words exist remains an experimental question.
 
 ### EL-16 and wider
 
-65,792 words is well past what single English words can supply, so EL-16 is not an English profile. Structurally, though, it is nearly the simplest one in the family: one trim class, and every boundary on a whole or half byte. Scripts with far larger token inventories bring it closer to reach — though as the section below works through, "closer" is not the same as viable.
+EL-16 requires 65,792 tokens, more than a usable single-word English vocabulary can supply. Its bit handling is nevertheless simple: it has one eight-bit trim group, and normal tokens contain exactly two bytes. Languages or scripts with larger token inventories may offer more candidates, but familiarity and distinctness still limit what is usable.
 
-### A phrase is not self-describing — unless we make it so
+### The decoder needs the profile and dictionary
 
-A phrase does not carry its own profile or dictionary identity. Decoding correctly requires knowing both, carried out of band, exactly the way "this is Base58, not Base32" is carried out of band. Implementations should be able to report a dictionary fingerprint so a mismatch fails loudly instead of quietly producing different, well-formed bytes.
+A phrase normally does not state which profile or dictionary produced it. The surrounding application or message must provide that information separately, just as it must say whether a character string uses Base32 or Base58. Implementations must report a **dictionary fingerprint**, a SHA-256 identifier calculated from the profile, declared language and writing system, ordered token mapping, and rules used to recognize written tokens. An application that already knows the expected fingerprint can reject the wrong dictionary instead of silently decoding the phrase to different bytes. The authoritative LXJ file and its optional LXB form share one fingerprint because they describe the same behavior.
 
-There is, however, a way to make the profile self-evident from the words alone — by carving the three dictionaries out of the master corpus as **mutually disjoint** sets. See [the open question below](#open-question-how-the-three-dictionaries-relate).
+One proposal would make the profile identifiable from the words: assign completely separate word sets to EL-8, EL-12, and EL-14, with no word shared between profiles. This remains undecided; see [the open question below](#open-question-whether-profiles-share-words).
 
-## Other Languages, and Ideographic Dictionaries
+## Other Languages and Character-Based Dictionaries
 
-Nothing in the encoding is English-specific. The bitstream model, trimming, and index space are language-neutral; only the dictionary changes.
+Nothing in the encoding rules is English-specific. Bit grouping, trim tokens, and index assignment remain the same; only the token inventory and the rules for recognizing written tokens change.
 
-What *is* English-specific is the ceiling on `w`. English gives us roughly 20,000–25,000 usable common root words, which is what caps the reference profile at 14 bits. Scripts with large character inventories lift that cap — and because EL-16 has only one trim class, going wider actually makes the *encoder* simpler, not harder.
+The largest practical `w` depends on how many suitable tokens a language or writing system can provide. A source database may contain many entries that are too rare, visually similar, difficult to pronounce, or otherwise unsuitable. EL-14 is therefore a target to test for English, not a proven capacity. A writing system with many familiar characters may support a different profile. EL-16, for example, needs a much larger dictionary than EL-14 but has simpler remainder handling because it needs only one trim group.
 
-**Chinese, one character per word.** A single Han character can be a token: one glyph carries the whole chunk, phrases are visually compact, and no separators are needed because segmentation is by glyph. The limit is the character inventory — the Table of General Standard Chinese Characters defines 8,105 characters. That is comfortable for EL-12's 4,368 tokens and impossible for EL-14's 21,844. **EL-12 is therefore the natural profile for a single-character Chinese dictionary**, the same way EL-14 is natural for single-word English — a pleasant convergence, since EL-12 is also the simplest profile that has trim logic at all.
+**Chinese with one character per token.** A Han character—the character family used in written Chinese—can serve as one token. Such a phrase is visually compact and may omit spaces. A finalized dictionary must define exactly what the decoder counts, such as Unicode code points, rather than relying on a programming language's informal idea of a character. The Table of General Standard Chinese Characters contains 8,105 characters. That is more than EL-12's required 4,368 tokens but less than EL-14's 21,844. EL-12 is therefore the largest defined profile that could use only characters from that standard, before filtering for familiarity and visual distinctness.
 
-**Japanese reaches one profile less far.** The jōyō kanji list is 2,136 characters, which supports EL-8 with room to spare and falls well short of EL-12's 4,368 — as does the full 3,000-character set of kanji legally permitted in Japanese personal names (jōyō plus 864 jinmeiyō). Beware the figure "about 10,000 kanji": that is the **JIS X 0213 encoding repertoire**, what a Japanese computer can display, not what a reader knows. Sourcing a dictionary from it would be like sourcing an English one from the full OED headword list. Measured against real literacy, Japanese single-glyph dictionaries top out at EL-8.
+**Japanese has a smaller widely known kanji inventory.** *Kanji* are the Han-derived characters used in Japanese. The jōyō list—the government guide to characters for general use—contains 2,136. Even the 3,000 kanji allowed in personal names, consisting of the jōyō list plus 864 additional jinmeiyō name characters, falls short of EL-12's 4,368-token requirement. The often-cited figure of about 10,000 comes from Japanese Industrial Standard (JIS) X 0213, a computer character-encoding standard; it describes what software can represent, not what readers commonly know. A practical Japanese dictionary restricted to single kanji therefore appears limited to EL-8.
 
-The gap versus Chinese is structural: Chinese writes nearly everything in hanzi, so the everyday inventory runs to ~3,500 characters, while Japanese offloads grammar and much vocabulary onto kana, leaving kanji past jōyō genuinely rare. That ~3x difference is exactly one profile step.
+Chinese routinely writes most content words and many other elements with Han characters, while Japanese also uses hiragana and katakana—two scripts that represent sounds and are collectively called **kana**. Consequently, Japanese text can rely on a smaller set of commonly known kanji. Based on the reviewed raw counts, Chinese can be investigated at EL-12 while Japanese single-kanji tokens do not reach EL-12.
 
-**Compound tokens for 16 bits and beyond.** Reaching 65,792 tokens means multi-character words rather than single glyphs, and the margin is thinner than it looks. A standard Chinese desk dictionary — 现代汉语词典, 7th ed. — holds about 69,000 entries, so EL-16 would consume 95% of it with essentially nothing discarded for familiarity or distinctness. Usable EL-16 needs a comprehensive lexicon several times that size, paying the same tail-familiarity cost English pays at EL-14. Segmentation also stops being free; fixed-width two-character tokens are the likely construction, keeping segmentation a matter of counting and phrases visually regular. Realistically, **EL-12 single-glyph Chinese is the non-English profile the evidence supports**; EL-16 is aspirational everywhere.
+**Multi-character tokens for EL-16 and wider profiles.** Reaching EL-16's 65,792 tokens would require words or compounds containing more than one character. A standard Chinese dictionary, 现代汉语词典 (*Xiandai Hanyu Cidian*), contains about 69,000 entries. Using nearly all of it would leave almost no entries available to discard for rarity, visual similarity, or other problems. A practical EL-16 dictionary would need a much larger starting list. It would also need unambiguous token boundaries: fixed two-code-point tokens could be counted directly, while variable-length tokens would require separators. Current evidence supports investigating single-character Chinese at EL-12; it does not yet establish a practical EL-16 dictionary.
 
 Full citations for all of these counts are in [SPEC.md section 12.6](SPEC.md).
 
-**The selection criteria change with the script.** The English criteria are weighted toward speech, because English fails at homophones and accents. Mandarin and Japanese have much higher homophone density, so a CJK phrase is markedly less reliable spoken than written. Those dictionaries should optimize for **visual** distinctness first — stroke count, shared radicals, overall glyph shape are the ideographic equivalent of a near-homophone — with romanization distance (pinyin plus tone, romaji) as a secondary metric, since it governs how the phrase gets typed. Semantic distance matters more, not less: character sequences readily read as meaningful compounds, so adjacent-token pairs that form a common word should be screened out.
+**Selection criteria depend on the writing system.** English selection gives substantial weight to spoken confusion caused by homophones and accent differences. Mandarin and Japanese contain many characters or words with the same pronunciation, so their dictionaries should give greater weight to visual differences. Candidate measures include stroke count, shared character components such as radicals, and overall shape. A secondary measure can compare **romanizations**, which write pronunciations in the Latin alphabet: pinyin with tone for Mandarin and rōmaji for Japanese. Meaning still matters because neighboring characters can accidentally form a familiar compound that a person may remember as a unit rather than as two independent tokens.
 
 ## Where the Dictionaries Come From
 
-The dictionaries are not going to be written by hand — 21,844 words chosen by human judgment would be neither auditable nor reproducible. They will be **derived** from a master word list by a set of preprocessing tools that do not exist yet.
+Except for possible manual review of the 256-word EL-8 dictionary, the dictionaries will not be selected entirely by hand. Human selection of 21,844 words would be difficult to repeat consistently or inspect systematically. Instead, software will derive each dictionary from recorded source datasets and selection settings.
 
-The objective, stated plainly: **pick the subset of a master vocabulary that maximizes the minimum pairwise distance in spelling, sound, and meaning, subject to a hard word count and a familiarity floor.**
+The objective is to choose the required number of familiar words while making the easiest-to-confuse pair as different as possible in spelling, pronunciation, and meaning. “Familiarity floor” below means the lowest acceptable usage-frequency score.
 
-The intended pipeline:
+The intended pipeline—an ordered sequence in which each tool passes recorded output to the next—is:
 
-1. **Ingest.** Load a master word list together with corpus frequency data, a pronunciation lexicon, lemma/inflection data, and a semantic embedding model. "Common" should be measured, not asserted.
-2. **Filter.** Apply hard disqualifiers before any distance math: length outside 3–8 characters, non-ASCII, proper nouns, inflected forms whose root is already a candidate, offensive or sensitive terms, domain jargon, homophone sets, homographs with divergent pronunciations ("read", "lead", "wound"), unpredictable spellings, and anything below the familiarity floor. Every rejection gets logged with its reason, as a reviewable artifact.
-3. **Score.** Compute three independent distance families:
-   - *Spelling* — Damerau-Levenshtein edit distance, a keyboard-adjacency-weighted variant, and shared prefix/suffix length so the set isn't full of words differing only in an ending.
-   - *Sound* — phoneme-string edit distance weighted by articulatory features (so /b/–/p/ counts as nearer than /b/–/s/), with coarse phonetic-key collisions rejected outright, plus syllable count and stress pattern to spread the selection across prosodic shapes.
-   - *Meaning* — embedding cosine distance, to keep near-synonyms like "big"/"large" from both being selected (a human will substitute one for the other from memory and never notice) and to reduce the odds that a random phrase reads as a sentence.
-4. **Select.** Build a confusability graph — an edge between any two words too close in *any* of the three families — then seed with the highest-frequency candidates and greedily add words that conflict with nothing already chosen. Familiarity is the one property that cannot be recovered later, so it drives the ordering. If the target count isn't reached, thresholds relax by a recorded step and the run repeats; the relaxation trace ships with the dictionary. A dictionary that only hit its count by weakening the phonetic threshold twice should say so on its face.
-5. **Partition and index.** The most frequent words become the normal dictionary; the remainder become trim words, since trim words are used far less often. Each group is then sorted lexicographically to assign indices, so the artifact stays stable and diffable.
-6. **Emit and verify.** Write a UTF-8 artifact with a metadata header (profile, language, counts, pinned sources, config hash, SHA-256 fingerprint) and one word per line. A verifier then re-derives everything from the artifact alone and asserts the counts, the disjointness of normal and trim sets, the absence of duplicates, the canonical ordering, the surviving filters, the minimum distance in each family with worst offending pairs named, and a round-trip of the published test vectors.
+1. **Load and combine sources.** Load a starting word list, usage-frequency data derived from bodies of text, a pronunciation dictionary, data that connects word forms such as “walked” to the base form “walk,” and a numerical model of similarity in meaning. This stage converts the different source formats into one candidate table. “Common” should be supported by measured usage, not personal judgment.
+2. **Apply required exclusions.** Remove candidates that violate firm rules before comparing word pairs. Proposed rules exclude words outside 3–8 characters in the basic ASCII Latin character set, proper names, redundant grammatical forms, offensive or specialized terms, homophones (different words pronounced the same), words with multiple unrelated pronunciations, unpredictable spelling, and words below the familiarity floor. Record every removal and its reason so reviewers can inspect the result.
+3. **Measure similarity.** Compare each surviving pair in three ways:
+   - *Spelling* — count insertions, deletions, replacements, and adjacent-letter swaps; give extra weight to mistakes involving nearby keyboard keys; and detect long shared beginnings or endings.
+   - *Sound* — compare sequences of speech sounds, treating sounds formed similarly in the mouth as more alike; also compare syllable count and which syllables are stressed.
+   - *Meaning* — use a numerical language model to identify related words, such as “big” and “large.” Keeping such pairs apart reduces accidental substitution from memory and reduces the chance that random tokens resemble a meaningful sentence.
+4. **Choose the words.** Treat two words as conflicting if any comparison says they are too similar. Consider candidates from most to least familiar and keep a word only when it does not conflict with one already chosen. If this does not produce the required count, change the similarity limits by recorded amounts and repeat. The quality report must show every such change.
+5. **Assign roles and indices.** Give the most familiar selected words the normal-token positions because normal tokens appear throughout a phrase. Give the remaining words the trim-token positions, which can occur only once at the end. Sort each group by written form before assigning numerical indices so the result does not depend on source ordering.
+6. **Write, generate the binary form, and verify.** Write the authoritative, human-readable JavaScript Object Notation (JSON) dictionary in LXJ (`.lxj`) format and optionally produce the faster-loading LXB (`.lxb`) binary form. Confirm that both files describe the same index-to-token mapping and recognition rules. A file can be checked by itself for structure, counts, valid tokens, and its fingerprint. Claims about familiarity, pronunciation, meaning, and repeatable derivation require the recorded source datasets and settings; those results belong in a separate quality report.
 
-Every stage is deterministic given its inputs and a recorded config, so re-running the pipeline produces a byte-identical dictionary. The stages are metric-pluggable by design: a Chinese dictionary swaps out step 3's distance families for visual and romanization metrics and leaves the rest of the pipeline alone.
+Every stage must be deterministic: the same exact input files and settings must produce the same ordered mapping and fingerprint. The now-defined canonical LXJ writer must also produce exactly the same file bytes. The eventual LXB writer will have that requirement after its layout is defined. Step 3 can use measures appropriate to each writing system—for example, visual-shape and romanized-pronunciation comparisons for Chinese—without changing the other stages.
 
-These tools live under [`tools/`](tools/), organized by language and then by implementor name, the same convention `src/` uses. Independent implementations are welcome and useful: two pipelines written from the spec, run on the same pinned inputs, must produce byte-identical artifacts. If they don't, either the spec is underspecified or one of them is wrong.
+These tools will live under [`tools/`](tools/), organized first by programming language and then by author name, as `src/` is. Independently written pipelines provide a useful check: when given byte-for-byte identical input files and settings, they must produce the same mapping, fingerprint, and canonical LXJ bytes. The same comparison will apply to LXB after its layout is defined. A disagreement reveals either an implementation error or a rule that the specification has not defined precisely enough.
 
-### Open question: how the three dictionaries relate
+The normative LXJ v1 definition is in [`data/dict/FORMAT.md`](data/dict/FORMAT.md), with a machine-readable schema in [`data/dict/lxj-v1.schema.json`](data/dict/lxj-v1.schema.json). A complete test-only 256-entry dictionary is in [`tests/fixtures/dict/entropylex-en-8-test-v1.lxj`](tests/fixtures/dict/entropylex-en-8-test-v1.lxj). Reviewed source candidates, license conditions, and published or measured counts are in [`data/dict/SOURCES.md`](data/dict/SOURCES.md).
 
-**This is not decided yet.** When EL-8, EL-12, and EL-14 dictionaries all come out of the same master corpus, how should their word sets relate? Three schemes are live, and any of them could win:
+### Open question: whether profiles share words
 
-**A — nested subset.** EL-8 ⊂ EL-12 ⊂ EL-14. Cheapest at 21,844 words total, simplest to document and verify. But every EL-8 phrase is also a well-formed run of EL-14 words, so decoding under the wrong profile silently yields different, plausible bytes. And the EL-8 set is merely the top 256 of a 21,844-word selection, not the 256 most mutually distinct words the corpus could offer.
+**This is not decided yet.** When EL-8, EL-12, and EL-14 dictionaries are selected from the same starting vocabulary, how should their word sets relate? Three alternatives remain under consideration:
 
-**B — independent optimization.** Each profile selected separately against its own count. Best per-profile quality by a wide margin — at n=256 you can demand minimum distances that are simply unreachable at n=21,844. But the overlap between sets is uncontrolled, so a phrase is *sometimes* profile-identifying with no way to know when.
+**A — nested sets.** Every EL-8 word also appears in EL-12, and every EL-12 word also appears in EL-14 (`EL-8 ⊂ EL-12 ⊂ EL-14`). This needs only 21,844 distinct words and is simple to document. However, an EL-8 phrase also consists entirely of valid EL-14 words, so choosing the wrong profile can silently produce different bytes. The EL-8 words would also be inherited from the larger selection rather than optimized as the clearest possible set of 256.
 
-**C — disjoint partition.** Carve the three dictionaries as mutually exclusive sets, no word in more than one. This buys a real property: **any single word in a phrase tells you which profile produced it.** Profile becomes self-identifying, wrong-profile decoding becomes a hard failure instead of silent garbage, and EL-8 — which otherwise has *no* structural error detection whatsoever — gains at least that much.
+**B — independent selection.** Select each profile separately for its required count. A 256-word dictionary can enforce much larger differences between words than a 21,844-word dictionary can. However, words may overlap unpredictably, so some phrases would reveal their profile and others would not.
 
-The cost of C is corpus size, and it's worth being precise about it. The natural figure to quote is 2^14 + 2^12 + 2^8 = **20,736**, but that counts only the normal dictionaries. The trim words have to be disjoint too — from each other and from every normal set — which adds 5,732:
+**C — separate sets.** Allow no word to appear in more than one profile. Any nonempty phrase would then identify the profile that produced it because any one of its words would do so. The empty phrase contains no word and would remain valid under every profile. A decoder using another profile would reject a nonempty phrase instead of returning incorrect bytes. This would also give EL-8 some ability to detect a profile mismatch, although it would still not detect one valid EL-8 word being replaced by another.
+
+The cost of Scheme C is the number of distinct suitable words required. `2^14 + 2^12 + 2^8 = 20,736` counts only normal tokens. Trim tokens must also be separate from every normal and trim set, adding 5,732:
 
 | | EL-8 | EL-12 | EL-14 | Total |
 |---|---|---|---|---|
@@ -188,24 +190,24 @@ The cost of C is corpus size, and it's worth being precise about it. The natural
 | Trim words   | 0   | 272   | 5,460  | 5,732  |
 | **Per profile** | **256** | **4,368** | **21,844** | **26,468** |
 
-26,468 is past the 20,000–25,000 common-root-word estimate that drove the choice of 14 bits in the first place. The saving grace: only the 20,736 normal words need to be genuinely familiar. The 5,732 trim words come from the low-frequency tail by design, since trim words appear at most once per phrase. So the demand on *good* vocabulary does fit — but C consumes essentially all the headroom.
+The total of 26,468 exceeds the reviewed 25,000-entry 12dicts core list, although broader reusable sources contain many more base word forms. Only the 20,736 normal words require the highest familiarity; the 5,732 trim words may use less-frequent survivors because a trim word appears at most once per phrase. These counts make Scheme C worth testing, but do not prove that enough acceptable words exist. The derivation pipeline must report how many candidates survive and whether similarity limits had to be weakened.
 
-(A tempting middle road — disjoint normal dictionaries with one shared trim dictionary — turns out not to be worth it. The shared trim set still has to avoid all three normal sets, so it saves just 272 words, and it reintroduces ambiguity exactly where it's hardest to spot: a one-byte payload is a single trim word under both EL-12 and EL-14, carrying no identifying information at all. Full disjointness is the better buy.)
+A partial alternative would keep normal-word sets separate but share trim words. The shared trim set would still have to avoid all three normal sets, so it would save only 272 words. It would also fail to identify the profile for a one-byte payload, which is represented by one trim word in both EL-12 and EL-14. For those reasons, this alternative is not recommended.
 
-Extending disjointness to EL-16 is out of reach for English at 92,260 words.
+Giving EL-16 its own completely separate word set as well would require 92,260 English words in total and is not considered practical.
 
-The decision needs to be made before `eldict-select` gets written, since it determines whether the selector runs once with a partitioning step or three times with exclusion sets.
+The decision must be made before `eldict-select` is implemented. It determines whether selection occurs once followed by assignment to profiles, or occurs separately for each profile while excluding words already used elsewhere.
 
 ## Implementation Order
 
-Each step adds exactly one mechanism:
+The order below introduces complexity gradually:
 
-1. **EL-8** — dictionary loading, tokenization, normalization, round-trip harness, test vectors. No bitstream, no trimming.
-2. **EL-12** — bitstream packer, remainder arithmetic, trim dictionary, alignment validation. Every EL-14 mechanism at a fifth the scale, with hand-checkable intermediates.
+1. **EL-8** — load a dictionary, separate written phrases into tokens, apply written-form rules, verify encode-then-decode behavior, and run shared examples. No token crosses a byte boundary and no trim token is needed.
+2. **EL-12** — group bits across byte boundaries, calculate remaining bits, use trim tokens, and verify that decoding produces a whole number of bytes. This introduces every EL-14 mechanism with a dictionary one-fifth the size.
 3. **EL-14** — the reference profile. No new mechanism, only scale.
-4. **EL-16 and non-English dictionaries** — no new mechanism beyond glyph-based segmentation.
+4. **EL-16 and non-English dictionaries** — add token-recognition rules needed by other writing systems, such as splitting a separator-free phrase into individual characters.
 
-Implementations should state which profiles they support, and should share one `w`-parameterized code path rather than writing each profile separately.
+Implementations should state which profiles they support. Code that supports multiple profiles should take `w` and the associated profile values as data rather than duplicate the encoding algorithm for each profile.
 
-See [SPEC.md](SPEC.md) for the normative definition, including bit ordering, the unified index space, decoder validation rules, and the full dictionary derivation requirements.
+See [SPEC.md](SPEC.md) for the rules implementations must follow, including bit order, index assignment, decoder rejection conditions, and dictionary derivation requirements.
 

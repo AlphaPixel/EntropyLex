@@ -1,0 +1,8 @@
+{
+  "method": "manual-test-fixture-v1",
+  "purpose": "Provide 256 stable English words for testing LXJ loading and EL-8 byte conversion.",
+  "input": "Use every nonempty line from entropylex-en-8-test-v1.tokens.txt.",
+  "normalization": "Apply NFC and ASCII lowercase.",
+  "ordering": "Sort by Unicode code point and assign indices 0 through 255.",
+  "quality_claim": "None. This fixture has not passed the production familiarity, pronunciation, similarity, or sensitivity review."
+}
