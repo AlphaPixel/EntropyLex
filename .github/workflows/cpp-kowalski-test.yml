@@ -3,10 +3,10 @@ name: cpp-kowalski-test
 on:
   push:
     branches: [main]
-    paths: ['src/cpp/kowalski/**']
+    paths: ['cpp/kowalski/**']
   pull_request:
     branches: ['**']
-    paths: ['src/cpp/kowalski/**']
+    paths: ['cpp/kowalski/**']
 
 jobs:
   cpp-kowalski-test:
@@ -14,7 +14,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: src/cpp/kowalski
+        working-directory: cpp/kowalski
 
     steps:
     - name: checkout code
