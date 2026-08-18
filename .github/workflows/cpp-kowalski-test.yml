@@ -14,7 +14,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: cpp/kowalski
+        working-directory: src/cpp/kowalski
 
     steps:
     - name: checkout code
@@ -22,18 +22,29 @@ jobs:
       with:
         fetch-depth: 0
 
-
     - name: Setup Cpp
       uses: aminya/setup-cpp@v1
       with:
         compiler: llvm
         vcvarsall: true
+        clangtidy: true
+        clangformat: true
         cmake: true
         ninja: true
-        vcpkg: true
 
-    - name: build and test
+    - name: configure
+      run: cmake -S . -B ./build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+    - name: build
+      run: cmake --build ./build
+
+    - name: test
+      run: ctest --test-dir ./build --output-on-failure
+
+    - name: lint
       run: |
-        cmake -S . -B ./build
-        cmake --build ./build
-        ctest --test-dir ./build --output-on-failure
+        find . -name '*.cc' -not -path './build/*' | xargs clang-tidy -p build/
+
+    - name: format check
+      run: |
+        find . \( -name '*.cc' -o -name '*.h' \) -not -path './build/*' | xargs clang-format --dry-run --Werror
