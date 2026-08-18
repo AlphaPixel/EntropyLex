@@ -1,6 +1,15 @@
 # https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 version: 2
 updates:
+  - package-ecosystem: "pip"
+    directory: "/src/python/hanson-claude"
+    schedule:
+      interval: "daily"
+    commit-message:
+      prefix: "fix(pip): "
+    labels:
+      - "dependabot"
+
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:

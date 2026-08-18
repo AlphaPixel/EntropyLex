@@ -1,4 +1,4 @@
-This folder will contain EntropyLex encoders and decoders written in Python.
+This folder contains EntropyLex encoders and decoders written in Python.
 
 Each independently written implementation belongs in a subfolder named for its author, for example `satoshi-nakamoto`.
 

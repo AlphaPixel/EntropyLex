@@ -1,4 +1,6 @@
-This folder is reserved for a Python reference implementation of EntropyLex written by Claude Code. Its purpose is to test the specification and provide known behavior that independently written implementations can compare against. No code has been implemented yet.
+This folder contains the Hanson-Claude Python implementation of EntropyLex. It is an independent implementation that follows the structure of the Go implementation under `go/arcadium`; it is not an Arcadium project.
+
+The implementation is currently only a skeleton. Its common interface, EL-8 dictionary holder, tests, build commands, and continuous-integration configuration intentionally stop at the same point as the Go skeleton. Encoding, decoding, and LXJ loading are not implemented yet.
 
 Planned profile order is EL-8, then EL-12, then EL-14. All profiles will use the same encoding and decoding functions, with token width and related counts supplied as profile parameters.
 

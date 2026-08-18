@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "entropylex-hanson-claude"
+version = "0.0.1"
+description = "Hanson-Claude's Python implementation of EntropyLex"
+requires-python = ">=3.13"
+license = "MIT"
+authors = [
+  { name = "Hanson-Claude" },
+]
+dependencies = []
+
+[tool.setuptools]
+packages = ["entropylex", "entropylex8"]
+
+[tool.ruff]
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "SIM", "UP"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+
+[tool.coverage.run]
+branch = true
+source = ["entropylex", "entropylex8"]
+
+[tool.coverage.report]
+show_missing = true

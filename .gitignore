@@ -42,6 +42,7 @@
 # Python
 __pycache__/
 *.py[cod]
+*.pyd
 *.egg-info/
 .eggs/
 build/
@@ -52,8 +53,12 @@ venv/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.dmypy.json
+.pytype/
 .tox/
 .coverage
+.coverage.*
+coverage.xml
 htmlcov/
 
 # Rust
@@ -69,8 +74,17 @@ go.work
 # Editors and OS
 .vscode/
 .idea/
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
 .DS_Store
 Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.stackdump
 
 # Dictionary derivation inputs.
 # Source corpora, frequency lists, pronunciation lexicons and especially word
