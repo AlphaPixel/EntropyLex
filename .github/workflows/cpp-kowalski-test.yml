@@ -1,0 +1,50 @@
+name: cpp-kowalski-test
+
+on:
+  push:
+    branches: [main]
+    paths: ['cpp/kowalski/**']
+  pull_request:
+    branches: ['**']
+    paths: ['cpp/kowalski/**']
+
+jobs:
+  cpp-kowalski-test:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: cpp/kowalski
+
+    steps:
+    - name: checkout code
+      uses: actions/checkout@v7
+      with:
+        fetch-depth: 0
+
+    - name: Setup Cpp
+      uses: aminya/setup-cpp@v1
+      with:
+        compiler: llvm
+        vcvarsall: true
+        clangtidy: true
+        clangformat: true
+        cmake: true
+        ninja: true
+
+    - name: configure
+      run: cmake -S . -B ./build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+    - name: build
+      run: cmake --build ./build
+
+    - name: test
+      run: ctest --test-dir ./build --output-on-failure
+
+    - name: lint
+      run: |
+        find . -name '*.cc' -not -path './build/*' | xargs clang-tidy -p build/
+
+    - name: format check
+      run: |
+        find . \( -name '*.cc' -o -name '*.h' \) -not -path './build/*' | xargs clang-format --dry-run --Werror
