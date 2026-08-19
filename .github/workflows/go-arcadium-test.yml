@@ -18,7 +18,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: src/go/ian-cahoon
+        working-directory: src/go/arcadium
 
     steps:
     - name: checkout code
@@ -30,7 +30,7 @@ jobs:
       uses: actions/setup-go@v7
       with:
         go-version: ${{ matrix.go }}
-        go-version-file: src/go/ian-cahoon/go.mod
+        go-version-file: src/go/arcadium/go.mod
         check-latest: true
 
     - name: lint

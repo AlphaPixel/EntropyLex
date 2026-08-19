@@ -3,9 +3,9 @@ package dictionary_test
 import (
 	"testing"
 
-	"github.com/AlphaPixel/EntropyLex/src/go/ian-cahoon/assert"
-	"github.com/AlphaPixel/EntropyLex/src/go/ian-cahoon/dictionary"
-	"github.com/AlphaPixel/EntropyLex/src/go/ian-cahoon/require"
+	"github.com/AlphaPixel/EntropyLex/src/go/arcadium/entropylex/dictionary"
+	"github.com/AlphaPixel/EntropyLex/src/go/arcadium/test/assert"
+	"github.com/AlphaPixel/EntropyLex/src/go/arcadium/test/require"
 )
 
 func Test_NewLXJ(t *testing.T) {
