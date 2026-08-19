@@ -3,7 +3,7 @@ name: go-arcadium-test
 on:
   push:
     branches:
-      - main
+      - 'main'
   pull_request:
     branches:
       - '**'
@@ -14,29 +14,30 @@ jobs:
       matrix:
         go: [ '1.26.x' ]
 
-    runs-on: ubuntu-latest
+    runs-on: 'ubuntu-latest'
 
     defaults:
       run:
-        working-directory: src/go/ian-cahoon
+        working-directory: 'src/go/arcadium'
 
     steps:
-    - name: checkout code
-      uses: actions/checkout@v7
+    - name: 'checkout code'
+      uses: 'actions/checkout@v7'
       with:
         fetch-depth: 0
 
-    - name: setup go
-      uses: actions/setup-go@v7
+    - name: 'setup go'
+      uses: 'actions/setup-go@v7'
       with:
         go-version: ${{ matrix.go }}
-        go-version-file: src/go/ian-cahoon/go.mod
+        cache: true
+        cache-dependency-path: 'src/go/arcadium/go.sum'
         check-latest: true
 
-    - name: lint
+    - name: 'lint'
       run: |
         make lint
 
-    - name: test
+    - name: 'test'
       run: |
         make test

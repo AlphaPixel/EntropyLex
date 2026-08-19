@@ -4,9 +4,9 @@ export SHELL := /bin/bash
 
 .PHONY: all
 
-all: dictionary/schema/lxj-v1.schema.json test lint
+all: entropylex/dictionary/schema/lxj-v1.schema.json test lint
 
-dictionary/schema/lxj-v1.schema.json: ../../../data/dict/lxj-v1.schema.json
+entropylex/dictionary/schema/lxj-v1.schema.json: ../../../data/dict/lxj-v1.schema.json
 	@printf "\nCopying lxj-v1.schema.json locally...\n"
 	@cp $< $@
 

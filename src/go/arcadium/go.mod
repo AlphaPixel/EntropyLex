@@ -1,6 +1,6 @@
-module github.com/AlphaPixel/EntropyLex/src/go/ian-cahoon
+module github.com/AlphaPixel/EntropyLex/src/go/arcadium
 
-go 1.26.6
+go 1.26
 
 tool (
 	golang.org/x/vuln/cmd/govulncheck
