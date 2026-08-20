@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1844.92 1844.92" width="1844.92" height="1844.92" role="img" aria-label="EntropyLex circular avatar, bordered, black flood">
+  <title>EntropyLex circular avatar, bordered, black flood</title>
+  <desc>Self-contained dark circular chip: ink ground, paper mark.</desc>
+  <circle cx="922.46" cy="922.46" r="922.46" fill="#16181C"/>
+  <g fill="#F2F1ED">
+    <path fill-rule="evenodd" d="M 922.46 0 A 922.46 922.46 0 1 0 922.46 1844.92 A 922.46 922.46 0 1 0 922.46 0 Z M 922.46 30 A 892.46 892.46 0 1 1 922.46 1814.92 A 892.46 892.46 0 1 1 922.46 30 Z"/>
+    <g transform="translate(397.46,397.46)"><path d="M 0 16 A 16 16 0 0 1 16 0 L 734 0 A 16 16 0 0 1 750 16 L 750 134 A 16 16 0 0 1 734 150 L 166 150 A 16 16 0 0 0 150 166 L 150 284 A 16 16 0 0 0 166 300 L 734 300 A 16 16 0 0 1 750 316 L 750 434 A 16 16 0 0 1 734 450 L 166 450 A 16 16 0 0 0 150 466 L 150 584 A 16 16 0 0 0 166 600 L 734 600 A 16 16 0 0 1 750 616 L 750 734 A 16 16 0 0 1 734 750 L 16 750 A 16 16 0 0 1 0 734 Z"/><path d="M 900 166 A 16 16 0 0 1 916 150 L 1034 150 A 16 16 0 0 1 1050 166 L 1050 1034 A 16 16 0 0 1 1034 1050 L 166 1050 A 16 16 0 0 1 150 1034 L 150 916 A 16 16 0 0 1 166 900 L 884 900 A 16 16 0 0 0 900 884 Z"/></g>
+  </g>
+</svg>

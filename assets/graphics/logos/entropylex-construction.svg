@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2660 1480" width="2660" height="1480" role="img" aria-label="EntropyLex construction">
+  <title>EntropyLex construction</title>
+  <desc>Left: the 7x7 module grid. Right: the negative space, showing the square-wave pulse train.</desc>
+  <rect width="2660" height="1350" fill="#F2F1ED"/>
+  <g transform="translate(150,150)">
+    <g stroke="#B7382C" stroke-width="3" opacity="0.5"><line x1="0" y1="0" x2="0" y2="1050"/><line x1="0" y1="0" x2="1050" y2="0"/><line x1="150" y1="0" x2="150" y2="1050"/><line x1="0" y1="150" x2="1050" y2="150"/><line x1="300" y1="0" x2="300" y2="1050"/><line x1="0" y1="300" x2="1050" y2="300"/><line x1="450" y1="0" x2="450" y2="1050"/><line x1="0" y1="450" x2="1050" y2="450"/><line x1="600" y1="0" x2="600" y2="1050"/><line x1="0" y1="600" x2="1050" y2="600"/><line x1="750" y1="0" x2="750" y2="1050"/><line x1="0" y1="750" x2="1050" y2="750"/><line x1="900" y1="0" x2="900" y2="1050"/><line x1="0" y1="900" x2="1050" y2="900"/><line x1="1050" y1="0" x2="1050" y2="1050"/><line x1="0" y1="1050" x2="1050" y2="1050"/></g>
+    <g font-family="ui-monospace, Menlo, monospace" font-size="40" fill="#B7382C"><text x="75.0" y="-28" text-anchor="middle">0</text><text x="-30" y="89.0" text-anchor="end">0</text><text x="225.0" y="-28" text-anchor="middle">1</text><text x="-30" y="239.0" text-anchor="end">1</text><text x="375.0" y="-28" text-anchor="middle">2</text><text x="-30" y="389.0" text-anchor="end">2</text><text x="525.0" y="-28" text-anchor="middle">3</text><text x="-30" y="539.0" text-anchor="end">3</text><text x="675.0" y="-28" text-anchor="middle">4</text><text x="-30" y="689.0" text-anchor="end">4</text><text x="825.0" y="-28" text-anchor="middle">5</text><text x="-30" y="839.0" text-anchor="end">5</text><text x="975.0" y="-28" text-anchor="middle">6</text><text x="-30" y="989.0" text-anchor="end">6</text></g>
+    <g fill="#16181C"><path d="M 0 16 A 16 16 0 0 1 16 0 L 734 0 A 16 16 0 0 1 750 16 L 750 134 A 16 16 0 0 1 734 150 L 166 150 A 16 16 0 0 0 150 166 L 150 284 A 16 16 0 0 0 166 300 L 734 300 A 16 16 0 0 1 750 316 L 750 434 A 16 16 0 0 1 734 450 L 166 450 A 16 16 0 0 0 150 466 L 150 584 A 16 16 0 0 0 166 600 L 734 600 A 16 16 0 0 1 750 616 L 750 734 A 16 16 0 0 1 734 750 L 16 750 A 16 16 0 0 1 0 734 Z"/><path d="M 900 166 A 16 16 0 0 1 916 150 L 1034 150 A 16 16 0 0 1 1050 166 L 1050 1034 A 16 16 0 0 1 1034 1050 L 166 1050 A 16 16 0 0 1 150 1034 L 150 916 A 16 16 0 0 1 166 900 L 884 900 A 16 16 0 0 0 900 884 Z"/></g>
+  </g>
+  <g transform="translate(1460,150)">
+    <rect width="1050" height="1050" fill="#B7382C"/>
+    <g fill="#16181C"><path d="M 0 16 A 16 16 0 0 1 16 0 L 734 0 A 16 16 0 0 1 750 16 L 750 134 A 16 16 0 0 1 734 150 L 166 150 A 16 16 0 0 0 150 166 L 150 284 A 16 16 0 0 0 166 300 L 734 300 A 16 16 0 0 1 750 316 L 750 434 A 16 16 0 0 1 734 450 L 166 450 A 16 16 0 0 0 150 466 L 150 584 A 16 16 0 0 0 166 600 L 734 600 A 16 16 0 0 1 750 616 L 750 734 A 16 16 0 0 1 734 750 L 16 750 A 16 16 0 0 1 0 734 Z"/><path d="M 900 166 A 16 16 0 0 1 916 150 L 1034 150 A 16 16 0 0 1 1050 166 L 1050 1034 A 16 16 0 0 1 1034 1050 L 166 1050 A 16 16 0 0 1 150 1034 L 150 916 A 16 16 0 0 1 166 900 L 884 900 A 16 16 0 0 0 900 884 Z"/></g>
+  </g>
+  <g font-family="ui-monospace, Menlo, monospace" font-size="38" fill="#16181C">
+    <text x="150" y="1290">stroke = 1 module   every clearance = 1 module</text>
+    <text x="1460" y="1290">negative space: one constant-width ribbon</text>
+  </g>
+</svg>
