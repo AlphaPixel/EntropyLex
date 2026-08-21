@@ -16,10 +16,19 @@ FetchContent_Declare(
   googletest
   URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
 )
+FetchContent_Declare(
+  json-schema-validator
+  GIT_REPOSITORY https://github.com/pboettch/json-schema-validator.git
+  GIT_TAG 2.3.0
+)
+set(JSON_VALIDATOR_INSTALL OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+FetchContent_MakeAvailable(json-schema-validator)
+
 find_package(nlohmann_json 3.12.0 REQUIRED)
+
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
 enable_testing()
 
 add_executable(main.test tests/main.test.cc)
@@ -27,11 +36,14 @@ target_link_libraries(
     main.test
     GTest::gtest_main
     nlohmann_json::nlohmann_json
+    nlohmann_json_schema_validator
 )
 
 include(GoogleTest)
 gtest_discover_tests(main.test)
-
+target_compile_definitions(main.test PRIVATE
+    PROJECT_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+)
 add_executable(entropylex
   main.cc
   entropylex8.h
