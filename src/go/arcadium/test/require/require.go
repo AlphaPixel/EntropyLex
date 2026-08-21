@@ -64,9 +64,6 @@ func Nil(t *testing.T, object any) {
 // NotNil requires that the value of the given object is not nil.
 func NotNil(t *testing.T, object any) {
 	t.Helper()
-	if object != nil {
-		return
-	}
 
 	value := reflect.ValueOf(object)
 	switch value.Kind() {
@@ -78,9 +75,13 @@ func NotNil(t *testing.T, object any) {
 		if !value.IsNil() {
 			return
 		}
+	default:
+		if object != nil {
+			return
+		}
 	}
 
-	t.Fatalf("Unexpected nil value: %+v", object)
+	t.Fatalf("Unexpected nil value")
 }
 
 // True requires that the given value is true.

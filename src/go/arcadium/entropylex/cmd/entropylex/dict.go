@@ -20,21 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package entropylex
+package main
 
-import "io"
-
-type (
-	encoder struct {
-		enc *Encoding
-		w   io.Writer
-	}
+import (
+	"embed"
 )
 
-func (e *encoder) Write(p []byte) (n int, err error) {
-	return 0, nil
-}
-
-func (e *encoder) Close() error {
-	return nil
-}
+//go:embed dict/*
+var dictFS embed.FS

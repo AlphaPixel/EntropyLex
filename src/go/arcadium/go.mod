@@ -9,7 +9,9 @@ tool (
 
 require (
 	github.com/google/go-cmp v0.7.0
+	github.com/google/uuid v1.6.0
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
+	github.com/urfave/cli/v3 v3.11.0
 )
 
 require (

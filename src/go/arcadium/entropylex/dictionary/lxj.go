@@ -1,3 +1,5 @@
+// MIT License
+//
 // Copyright 2026 arcadium.dev <info@arcadium.dev>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -25,7 +27,7 @@ package dictionary
 import (
 	"encoding/json"
 	"errors"
-	"os"
+	"io"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
 )
@@ -44,7 +46,7 @@ type (
 
 	Format struct {
 		Name    string `json:"name,omitempty"`
-		Version string `json:"version,omitempty"`
+		Version int    `json:"version,omitempty"`
 	}
 
 	Dictionary struct {
@@ -108,40 +110,34 @@ type (
 	}
 )
 
-// NewLXJ creates a new LXJ dictionary from a JSON file.
-func NewLXJ(file string) (*Dictionary, error) {
-	if file == "" {
-		return nil, errors.New("file name required")
+// NewLXJ creates a new LXJ dictionary from an io.Reader.
+func NewLXJ(r io.ReadSeeker) (*LXJ, error) {
+	if r == nil {
+		return nil, errors.New("invalid dictionary file")
 	}
 
-	// Unmarshal the file into a Dictionary struct.
-	rawDict, err := os.ReadFile(file)
+	_, err := r.Seek(0, io.SeekStart)
 	if err != nil {
 		return nil, err
 	}
 
-	var d Dictionary
-	if err := json.Unmarshal(rawDict, &d); err != nil {
+	var dict LXJ
+	if err := json.NewDecoder(r).Decode(&dict); err != nil {
 		return nil, err
 	}
 
-	return &d, nil
+	return &dict, nil
 }
 
-// NewLXJValidated creates a new LXJ dictionary from a JSON file and validates
+// NewLXJValidated creates a new LXJ dictionary from an io.Reader and validates
 // it against the LXJ schema.
-func NewLXJValidated(file string) (*Dictionary, error) {
-	if file == "" {
-		return nil, errors.New("file name required")
-	}
-
-	f, err := os.Open(file)
-	if err != nil {
-		return nil, err
+func NewLXJValidated(r io.ReadSeeker) (*LXJ, error) {
+	if r == nil {
+		return nil, errors.New("invalid dictionary file")
 	}
 
 	// Validate the JSON file against the LXJ schema.
-	dict, err := jsonschema.UnmarshalJSON(f)
+	dict, err := jsonschema.UnmarshalJSON(r)
 	if err != nil {
 		return nil, err
 	}
@@ -149,5 +145,5 @@ func NewLXJValidated(file string) (*Dictionary, error) {
 		return nil, err
 	}
 
-	return NewLXJ(file)
+	return NewLXJ(r)
 }

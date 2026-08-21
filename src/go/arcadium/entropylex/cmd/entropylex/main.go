@@ -20,21 +20,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package entropylex
+package main
 
-import "io"
+import (
+	"context"
+	"os"
+	"path/filepath"
+
+	"github.com/AlphaPixel/EntropyLex/src/go/arcadium/build"
+)
+
+var (
+	Version string
+	Branch  string
+	Commit  string
+	Date    string
+)
 
 type (
-	encoder struct {
-		enc *Encoding
-		w   io.Writer
+	runner interface {
+		Run(ctx context.Context) error
 	}
 )
 
-func (e *encoder) Write(p []byte) (n int, err error) {
-	return 0, nil
+func Main() error {
+	info := build.Info(filepath.Base(os.Args[0]), Version, Branch, Commit, Date)
+	return NewCommand(info).Run(context.Background(), os.Args)
 }
 
-func (e *encoder) Close() error {
-	return nil
+func main() {
+	if err := Main(); err != nil {
+		os.Exit(1)
+	}
 }
