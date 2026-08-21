@@ -64,9 +64,6 @@ func Nil(t *testing.T, object any) {
 // NotNil requires that the value of the given object is not nil.
 func NotNil(t *testing.T, object any) {
 	t.Helper()
-	if object != nil {
-		return
-	}
 
 	value := reflect.ValueOf(object)
 	switch value.Kind() {
@@ -76,6 +73,10 @@ func NotNil(t *testing.T, object any) {
 		reflect.Pointer, reflect.Slice, reflect.UnsafePointer:
 
 		if !value.IsNil() {
+			return
+		}
+	default:
+		if object != nil {
 			return
 		}
 	}
