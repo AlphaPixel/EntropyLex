@@ -81,7 +81,7 @@ func NotNil(t *testing.T, object any) {
 		}
 	}
 
-	t.Fatalf("Unexpected nil value: %+v", object)
+	t.Fatalf("Unexpected nil value")
 }
 
 // True requires that the given value is true.
