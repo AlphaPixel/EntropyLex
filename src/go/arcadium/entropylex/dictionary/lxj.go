@@ -29,6 +29,7 @@ import (
 	"errors"
 	"io"
 
+	"github.com/AlphaPixel/EntropyLex/src/go/arcadium/unicode"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 )
 
@@ -76,9 +77,9 @@ type (
 	}
 
 	Tokenization struct {
-		Kind               string   `json:"kind,omitempty"`
-		CanonicalSeparator string   `json:"canonical_separator,omitempty"`
-		Separators         []string `json:"separators,omitempty"`
+		Kind               string              `json:"kind,omitempty"`
+		CanonicalSeparator unicode.CodePoint   `json:"canonical_separator,omitempty"`
+		Separators         []unicode.CodePoint `json:"separators,omitempty"`
 	}
 
 	Tokens []string
