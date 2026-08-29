@@ -33,7 +33,7 @@ import (
 var (
 	re = regexp.MustCompile(`^(?:U\+[0-9A-F]{4}|U\+[1-9A-F][0-9A-F]{4,5})$`)
 
-	ErrInvalidCodePoint = errors.New("Invalid unicode code point")
+	ErrInvalidCodePoint = errors.New("invalid unicode code point")
 )
 
 type (
@@ -47,23 +47,24 @@ const (
 )
 
 func (cp CodePoint) Decode() (string, error) {
-	s := strings.ToUpper(string(cp))
+	orig := string(cp)
+	s := strings.ToUpper(orig)
 
 	if s == "" {
 		return "", fmt.Errorf("%w: \"\"", ErrInvalidCodePoint)
 	}
 
 	if !re.MatchString(s) {
-		return "", fmt.Errorf("%w: %s", ErrInvalidCodePoint, s)
+		return "", fmt.Errorf("%w: %s", ErrInvalidCodePoint, orig)
 	}
 
 	i, _ := strconv.ParseUint(s[2:], 16, 32)
 	r := rune(i)
 	switch {
-	case r < 0 || r > maxCodePoint:
-		return "", fmt.Errorf("%w: %s", ErrInvalidCodePoint, s)
+	case r > maxCodePoint:
+		return "", fmt.Errorf("%w: %s", ErrInvalidCodePoint, orig)
 	case r >= surrogateRangeLow && r <= surrogateRangeHi:
-		return "", fmt.Errorf("%w: surrogate code point %s", ErrInvalidCodePoint, s)
+		return "", fmt.Errorf("%w: surrogate code point %s", ErrInvalidCodePoint, orig)
 	}
 	return string(r), nil
 }
