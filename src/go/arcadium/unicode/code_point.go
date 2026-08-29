@@ -56,7 +56,11 @@ func (cp CodePoint) Decode() (string, error) {
 		return "", fmt.Errorf("%w: %s", ErrInvalidCodePoint, s)
 	}
 
+	// Yes, I know I am ignoring the error from the parse. Yes, I know this is a
+	// smell that indicates that validation and parsing want to be one step.
+	// However I am not going to write a json unmarhaller for this.
 	i, _ := strconv.ParseUint(s[2:], 16, 32)
+
 	switch {
 	case i > maxCodePoint:
 		return "", fmt.Errorf("%w: %s", ErrInvalidCodePoint, s)
