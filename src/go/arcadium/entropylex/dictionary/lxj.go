@@ -29,6 +29,7 @@ import (
 	"errors"
 	"io"
 
+	"github.com/AlphaPixel/EntropyLex/src/go/arcadium/unicode"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 )
 
@@ -70,15 +71,15 @@ type (
 	Recognition struct {
 		UnicodeVersion string       `json:"unicode_version,omitempty"`
 		Normalization  string       `json:"normalization,omitempty"`
-		Case           string       `json:"case_folding,omitempty"`
+		Case           string       `json:"case,omitempty"`
 		TokenText      string       `json:"token_text,omitempty"`
 		Tokenization   Tokenization `json:"tokenization"`
 	}
 
 	Tokenization struct {
-		Kind               string   `json:"kind,omitempty"`
-		CanonicalSeparator string   `json:"canonical_separator,omitempty"`
-		Separators         []string `json:"separators,omitempty"`
+		Kind               string              `json:"kind,omitempty"`
+		CanonicalSeparator unicode.CodePoint   `json:"canonical_separator,omitempty"`
+		Separators         []unicode.CodePoint `json:"separators,omitempty"`
 	}
 
 	Tokens []string

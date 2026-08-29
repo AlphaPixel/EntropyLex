@@ -39,6 +39,9 @@ func Test_NewLXJ(t *testing.T) {
 				require.Equal(t, len(dict.Tokens), 256)
 				assert.Equal(t, dict.Tokens[0], "able")
 				assert.Equal(t, dict.Tokens[255], "power")
+				csep, err := dict.Recognition.Tokenization.CanonicalSeparator.Decode()
+				assert.Nil(t, err)
+				assert.Equal(t, csep, " ")
 			},
 		},
 	}
