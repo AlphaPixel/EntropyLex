@@ -71,7 +71,7 @@ type (
 	Recognition struct {
 		UnicodeVersion string       `json:"unicode_version,omitempty"`
 		Normalization  string       `json:"normalization,omitempty"`
-		Case           string       `json:"case_folding,omitempty"`
+		Case           string       `json:"case,omitempty"`
 		TokenText      string       `json:"token_text,omitempty"`
 		Tokenization   Tokenization `json:"tokenization"`
 	}

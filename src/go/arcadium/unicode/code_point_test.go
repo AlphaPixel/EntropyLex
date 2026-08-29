@@ -44,12 +44,30 @@ func Test_UnicodeCodePoint_String(t *testing.T) {
 			},
 		},
 		{
-			name: "surrogate code point error",
+			name: "surrogate code point error, lower boundry",
 			ucp:  unicode.CodePoint("U+D800"),
 			verify: func(t *testing.T, s string, err error) {
 				assert.Equal(t, s, "")
 				assert.IsError(t, err, unicode.ErrInvalidCodePoint)
 				assert.Error(t, err, "invalid unicode code point: surrogate code point U+D800")
+			},
+		},
+		{
+			name: "surrogate code point error, upper boundry",
+			ucp:  unicode.CodePoint("U+DFFF"),
+			verify: func(t *testing.T, s string, err error) {
+				assert.Equal(t, s, "")
+				assert.IsError(t, err, unicode.ErrInvalidCodePoint)
+				assert.Error(t, err, "invalid unicode code point: surrogate code point U+DFFF")
+			},
+		},
+		{
+			name: "surrogate code point error, mid boundry",
+			ucp:  unicode.CodePoint("U+DCDE"),
+			verify: func(t *testing.T, s string, err error) {
+				assert.Equal(t, s, "")
+				assert.IsError(t, err, unicode.ErrInvalidCodePoint)
+				assert.Error(t, err, "invalid unicode code point: surrogate code point U+DCDE")
 			},
 		},
 		{
@@ -71,8 +89,8 @@ func Test_UnicodeCodePoint_String(t *testing.T) {
 			},
 		},
 		{
-			name: "U+754c", // Tests lower case
-			ucp:  unicode.CodePoint("U+754c"),
+			name: "U+754C",
+			ucp:  unicode.CodePoint("U+754C"),
 			verify: func(t *testing.T, s string, err error) {
 				assert.Nil(t, err)
 				assert.Equal(t, s, "界")
