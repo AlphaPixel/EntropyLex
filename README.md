@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/graphics/logos/entropylex-mark-bordered-inverse-blackflood.svg">
+    <img src="assets/graphics/logos/entropylex-mark-bordered-whiteflood.svg" alt="EntropyLex" width="160">
+  </picture>
+</p>
+
 # EntropyLex: A Human-Readable Encoding for Binary Data
 
 EntropyLex is a reversible encoding: it converts a sequence of bytes into dictionary tokens and converts those tokens back into exactly the original bytes. The first planned dictionaries use common English words. Possible payloads include cryptographic keys, device identifiers, authentication tokens, and hash values.
@@ -211,3 +218,14 @@ Implementations should state which profiles they support. Code that supports mul
 
 See [SPEC.md](SPEC.md) for the rules implementations must follow, including bit order, index assignment, decoder rejection conditions, and dictionary derivation requirements.
 
+## License and the EntropyLex mark
+
+The software and documentation in this repository are under the [MIT License](LICENSE).
+
+The **EntropyLex name and logo are not covered by that grant.** You may say your
+implementation implements EntropyLex, name the project in prose, and use the
+unmodified logo to refer to this project. Using the name or mark as the identity
+of your own product, or in a way implying endorsement, needs permission. See
+[TRADEMARKS.md](TRADEMARKS.md) for the details, and
+[assets/graphics/logos/DESIGN.md](assets/graphics/logos/DESIGN.md) for how the
+mark is built and how to use it correctly.

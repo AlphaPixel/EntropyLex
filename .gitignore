@@ -91,3 +91,17 @@ tools/**/cache/
 # Working scratch from derivation runs is not.
 tools/**/work/
 *.report.tmp
+
+# Logo generator working output.
+# assets/graphics/logos/entropylex_mark.py and ascii_mark.py each write more
+# variants than the identity ships. The shipped set is listed in that folder's
+# DESIGN.md section 6; everything below is explored-but-unused output that
+# reappears on every regeneration. Listed by exact name rather than by wildcard,
+# so a new shipped variant is never ignored by accident.
+assets/graphics/logos/entropylex-mark.svg
+assets/graphics/logos/entropylex-mark-closed-L.svg
+assets/graphics/logos/entropylex-avatar.svg
+assets/graphics/logos/entropylex-appicon.svg
+assets/graphics/logos/entropylex-lockup.svg
+assets/graphics/logos/entropylex-7x7-hash-negative.txt
+assets/graphics/logos/entropylex-7x7-ascii-negative.txt
