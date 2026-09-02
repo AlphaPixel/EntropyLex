@@ -20,19 +20,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package entropylex
+package main
 
 import (
-	"io"
+	"errors"
+	"fmt"
+	"os"
 )
 
-type (
-	decoder struct {
-		enc Encoding
-		r   io.Reader
+// InputFile opens the input file for reading given the input filename.
+func InputFile(filename string) (*os.File, error) {
+	if filename == "" || filename == "-" {
+		return nil, nil
 	}
-)
 
-func (d *decoder) Read(p []byte) (n int, err error) {
-	return 0, nil
+	fs, err := os.Stat(filename)
+	if err != nil {
+		return nil, err
+	}
+	mode := fs.Mode()
+
+	if !mode.IsRegular() {
+		errmsg := fmt.Sprintf("input file \"%s\" is not a regular file", filename)
+		if mode.IsDir() {
+			errmsg = fmt.Sprintf("input file \"%s\" is a directory", filename)
+		}
+		return nil, errors.New(errmsg)
+	}
+
+	return os.Open(filename)
 }

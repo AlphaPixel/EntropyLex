@@ -26,7 +26,7 @@ import "io"
 
 type (
 	encoder struct {
-		enc *Encoding
+		enc Encoding
 		w   io.Writer
 	}
 )

@@ -27,6 +27,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/AlphaPixel/EntropyLex/src/go/arcadium"
 	"github.com/AlphaPixel/EntropyLex/src/go/arcadium/build"
 )
 
@@ -37,12 +38,6 @@ var (
 	Date    string
 )
 
-type (
-	runner interface {
-		Run(ctx context.Context) error
-	}
-)
-
 func Main() error {
 	info := build.Info(filepath.Base(os.Args[0]), Version, Branch, Commit, Date)
 	return NewCommand(info).Run(context.Background(), os.Args)
@@ -50,6 +45,9 @@ func Main() error {
 
 func main() {
 	if err := Main(); err != nil {
-		os.Exit(1)
+		if c, ok := err.(interface{ Code() arcadium.ReturnCode }); ok {
+			os.Exit(int(c.Code()))
+		}
+		os.Exit(int(UnknownErrorCode))
 	}
 }

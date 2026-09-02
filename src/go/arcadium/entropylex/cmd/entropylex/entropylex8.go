@@ -23,27 +23,18 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"io"
 
 	"github.com/AlphaPixel/EntropyLex/src/go/arcadium/entropylex/dictionary"
+	"github.com/AlphaPixel/EntropyLex/src/go/arcadium/entropylex/entropylex8"
 )
 
 const (
 	el8LXJFile = "dict/entropylex-en-8-test-v1.lxj" // FIXME: Change to production version at some point.
 )
 
-type (
-	EntropyLex8 struct {
-		input  io.ReadCloser
-		output io.WriteCloser
-		decode bool
-		dict   *dictionary.LXJ
-	}
-)
-
-func NewEntropyLex8(input io.ReadCloser, output io.WriteCloser, decode bool) (*EntropyLex8, error) {
+func NewEntropyLex8Encoding() (*entropylex8.Encoding, error) {
 	lxjfile, err := dictFS.Open(el8LXJFile)
 	if err != nil {
 		return nil, err
@@ -59,15 +50,55 @@ func NewEntropyLex8(input io.ReadCloser, output io.WriteCloser, decode bool) (*E
 		return nil, err
 	}
 
-	return &EntropyLex8{
-		input:  input,
-		output: output,
-		decode: decode,
-		dict:   lxj,
-	}, nil
+	return entropylex8.NewEncoding(lxj), nil
+}
+
+/*
+func (e EntropyLex8) Encoder() io.Writer {
+	return e.encoding.Encoder(e.output)
+}
+
+func (e EntropyLex8) Decoder() io.Reader {
+	// TODO
+	return nil
+
 }
 
 func (e *EntropyLex8) Run(ctx context.Context) error {
+	if e.decoding {
+		return e.decode(ctx)
+	}
+	return e.encode(ctx)
+}
+
+func (e *EntropyLex8) decode(context.Context) error {
 	// TODO
 	return nil
 }
+
+func (e *EntropyLex8) encode(ctx context.Context) error {
+	var (
+		encoder = contextio.NewWriter(ctx, e.encoding.Encoder(e.output))
+		buffer  = make([]byte, 1024)
+	)
+
+	for {
+		bytesRead, err := os.Stdin.Read(buffer)
+
+		if bytesRead > 0 {
+			if _, err := encoder.Write(buffer); err != nil {
+				return err
+			}
+		}
+
+		if err != nil {
+			if err == io.EOF {
+				return err
+			}
+			break
+		}
+	}
+
+	return nil
+}
+*/

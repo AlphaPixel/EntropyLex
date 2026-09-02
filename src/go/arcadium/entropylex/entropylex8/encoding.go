@@ -22,12 +22,25 @@
 
 package entropylex8
 
+import (
+	"github.com/AlphaPixel/EntropyLex/src/go/arcadium/entropylex/dictionary"
+)
+
 type (
 	Encoding struct {
-		dict map[int]string
+		dict *dictionary.LXJ
 	}
 )
 
-func NewEncoding(dict map[int]string) *Encoding {
+func NewEncoding(dict *dictionary.LXJ) *Encoding {
 	return &Encoding{dict: dict}
+}
+
+func (enc *Encoding) Decode(dst, src []byte) (n int, err error) {
+	// TODO
+	return 0, nil
+}
+
+func (enc *Encoding) Encode(dst, src []byte) {
+	// TODO
 }

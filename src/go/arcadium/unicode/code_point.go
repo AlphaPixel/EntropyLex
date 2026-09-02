@@ -23,16 +23,17 @@
 package unicode
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
+
+	"github.com/AlphaPixel/EntropyLex/src/go/arcadium"
 )
 
 var (
 	reCodePoint = regexp.MustCompile(`^(?:U\+[0-9A-F]{4}|U\+[1-9A-F][0-9A-F]{4,5})$`)
 
-	ErrInvalidCodePoint = errors.New("invalid unicode code point")
+	ErrInvalidCodePoint = fmt.Errorf("%w: invalid unicode code point", arcadium.ErrInternal)
 )
 
 type (

@@ -20,19 +20,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package entropylex
+package arcadium
 
-import (
-	"io"
-)
+import "fmt"
 
 type (
-	decoder struct {
-		enc Encoding
-		r   io.Reader
+	ReturnCode uint8
+
+	ErrorCode struct {
+		code ReturnCode
 	}
 )
 
-func (d *decoder) Read(p []byte) (n int, err error) {
-	return 0, nil
+func (err ErrorCode) Error() string {
+	return fmt.Sprintf("code: %d", err.code)
 }
+
+func (err ErrorCode) Code() ReturnCode {
+	return err.code
+}
+
+const (
+	UsageErrorCode    ReturnCode = 1
+	InternalErrorCode ReturnCode = 4
+	UnknownErrorCode  ReturnCode = 9
+)
+
+var (
+	ErrUsage    = fmt.Errorf("usage error, %w", ErrorCode{code: UsageErrorCode})
+	ErrInternal = fmt.Errorf("internal error, %w", ErrorCode{code: InternalErrorCode})
+)

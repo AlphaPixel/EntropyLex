@@ -20,19 +20,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package entropylex
+package main
 
 import (
-	"io"
+	"errors"
+	"fmt"
+	"os"
 )
 
-type (
-	decoder struct {
-		enc Encoding
-		r   io.Reader
+// OutputFile creates an output file give the output filename and the force flag.
+func OutputFile(filename string, force bool) (*os.File, error) {
+	if filename == "" {
+		return nil, nil
 	}
-)
 
-func (d *decoder) Read(p []byte) (n int, err error) {
-	return 0, nil
+	// See if the file exists. If not Create it.
+	fs, err := os.Stat(filename)
+	if err != nil {
+		return os.Create(filename)
+	}
+	mode := fs.Mode()
+
+	// If the file exists and it isn't a regular file, return an error.
+	if !mode.IsRegular() {
+		errmsg := fmt.Sprintf("output file \"%s\" is not a regular file", filename)
+		if mode.IsDir() {
+			errmsg = fmt.Sprintf("output file \"%s\" is a directory", filename)
+		}
+		return nil, errors.New(errmsg)
+	}
+
+	// If the file exists and it's a regular file, create it if the size is 0.
+	if fs.Size() == 0 {
+		return os.Create(filename)
+	}
+
+	// If the size is non-zero and the force flag isn't present, return an error.
+	if !force {
+		return nil, errors.New("a non-empty output file exist, to overwrite use the --force option")
+	}
+
+	return os.Create(filename)
 }

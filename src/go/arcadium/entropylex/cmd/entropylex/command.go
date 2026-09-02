@@ -26,12 +26,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/mail"
 	"os"
 	"path/filepath"
 
-	"github.com/AlphaPixel/EntropyLex/src/go/arcadium/build"
+	"github.com/dolmen-go/contextio"
 	"github.com/urfave/cli/v3"
+
+	"github.com/AlphaPixel/EntropyLex/src/go/arcadium/build"
+	"github.com/AlphaPixel/EntropyLex/src/go/arcadium/entropylex"
 )
 
 func NewCommand(info build.Information) *cli.Command {
@@ -131,14 +135,11 @@ non-empty output file exists, it can be overwritten using the -force option.
 				}
 			}
 
-			// Are we encoding or decoding?
-			decode := cmd.Bool("decode")
-
-			var el runner
+			var enc entropylex.Encoding
 			bitDepth := cmd.Uint("bit-depth")
 			switch bitDepth {
 			case 8:
-				el, err = NewEntropyLex8(infile, outfile, decode)
+				enc, err = NewEntropyLex8Encoding()
 				if err != nil {
 					return err
 				}
@@ -148,67 +149,45 @@ non-empty output file exists, it can be overwritten using the -force option.
 				return errors.New("usage error")
 			}
 
-			return el.Run(ctx)
+			// Are we encoding or decoding?
+			if cmd.Bool("decode") {
+				return decode(ctx, enc, infile, outfile)
+			}
+			return encode(ctx, enc, infile, outfile)
 		},
 	}
 
 	return cmd
 }
 
-// OutputFile creates an output file give the output filename and the force flag.
-func OutputFile(filename string, force bool) (*os.File, error) {
-	if filename == "" {
-		return nil, nil
-	}
-
-	// See if the file exists. If not Create it.
-	fs, err := os.Stat(filename)
-	if err != nil {
-		return os.Create(filename)
-	}
-	mode := fs.Mode()
-
-	// If the file exists and it isn't a regular file, return an error.
-	if !mode.IsRegular() {
-		errmsg := fmt.Sprintf("output file \"%s\" is not a regular file", filename)
-		if mode.IsDir() {
-			errmsg = fmt.Sprintf("output file \"%s\" is a directory", filename)
-		}
-		return nil, errors.New(errmsg)
-	}
-
-	// If the file exists and it's a regular file, create it if the size is 0.
-	if fs.Size() == 0 {
-		return os.Create(filename)
-	}
-
-	// If the size is non-zero and the force flag isn't present, return an error.
-	if !force {
-		return nil, errors.New("a non-empty output file exist, to overwrite use the --force option")
-	}
-
-	return os.Create(filename)
+func decode(context.Context, entropylex.Encoding, io.Reader, io.Writer) error {
+	return nil
 }
 
-// InputFile opens the input file for reading given the input filename.
-func InputFile(filename string) (*os.File, error) {
-	if filename == "" || filename == "-" {
-		return nil, nil
-	}
+func encode(ctx context.Context, enc entropylex.Encoding, r io.Reader, w io.Writer) error {
+	var (
+		output = contextio.NewWriter(ctx, entropylex.NewEncoder(enc, w))
+		input  = contextio.NewReader(ctx, r)
 
-	fs, err := os.Stat(filename)
-	if err != nil {
-		return nil, err
-	}
-	mode := fs.Mode()
+		buffer = make([]byte, 1024)
+	)
 
-	if !mode.IsRegular() {
-		errmsg := fmt.Sprintf("input file \"%s\" is not a regular file", filename)
-		if mode.IsDir() {
-			errmsg = fmt.Sprintf("input file \"%s\" is a directory", filename)
+	for {
+		bytesRead, err := input.Read(buffer)
+
+		if bytesRead > 0 {
+			if _, err := output.Write(buffer); err != nil {
+				return err
+			}
 		}
-		return nil, errors.New(errmsg)
+
+		if err != nil {
+			if err == io.EOF {
+				return err
+			}
+			break
+		}
 	}
 
-	return os.Open(filename)
+	return nil
 }
