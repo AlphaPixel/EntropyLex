@@ -24,6 +24,8 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -50,6 +52,11 @@ func Main() error {
 
 func main() {
 	if err := Main(); err != nil {
-		os.Exit(1)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		var errorCode ErrorCode
+		if errors.As(err, &errorCode) {
+			os.Exit(errorCode.Code())
+		}
+		os.Exit(UnknownErrorCode)
 	}
 }

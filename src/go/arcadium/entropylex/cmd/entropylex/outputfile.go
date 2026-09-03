@@ -20,52 +20,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package unicode
+package main
 
 import (
 	"errors"
 	"fmt"
-	"regexp"
-	"strconv"
+	"os"
 )
 
-var (
-	reCodePoint = regexp.MustCompile(`^(?:U\+[0-9A-F]{4}|U\+[1-9A-F][0-9A-F]{4,5})$`)
-
-	ErrInvalidCodePoint = errors.New("invalid unicode code point")
-)
-
-type (
-	CodePoint string
-)
-
-const (
-	maxCodePoint      = 0x10FFFF
-	surrogateRangeLow = 0xD800
-	surrogateRangeHi  = 0xDFFF
-)
-
-func (cp CodePoint) Decode() (string, error) {
-	s := string(cp)
-
-	if s == "" {
-		return "", fmt.Errorf("%w, \"\"", ErrInvalidCodePoint)
+// OutputFile creates an output file give the output filename and the force flag.
+func OutputFile(filename string, force bool) (*os.File, error) {
+	if filename == "" {
+		return nil, nil
 	}
 
-	if !reCodePoint.MatchString(s) {
-		return "", fmt.Errorf("%w, %s", ErrInvalidCodePoint, s)
+	// See if the file exists. If not Create it.
+	fs, err := os.Stat(filename)
+	if err != nil {
+		return os.Create(filename)
+	}
+	mode := fs.Mode()
+
+	// If the file exists and it isn't a regular file, return an error.
+	if !mode.IsRegular() {
+		errmsg := fmt.Sprintf("output file \"%s\" is not a regular file", filename)
+		if mode.IsDir() {
+			errmsg = fmt.Sprintf("output file \"%s\" is a directory", filename)
+		}
+		return nil, errors.New(errmsg)
 	}
 
-	// Yes, I know I am ignoring the error from the parse. Yes, I know this is a
-	// smell that indicates that validation and parsing want to be one step.
-	// However I am not going to write a json unmarhaller for this.
-	i, _ := strconv.ParseUint(s[2:], 16, 32)
-
-	switch {
-	case i > maxCodePoint:
-		return "", fmt.Errorf("%w, %s", ErrInvalidCodePoint, s)
-	case i >= surrogateRangeLow && i <= surrogateRangeHi:
-		return "", fmt.Errorf("%w, surrogate code point %s", ErrInvalidCodePoint, s)
+	// If the file exists and it's a regular file, create it if the size is 0.
+	if fs.Size() == 0 {
+		return os.Create(filename)
 	}
-	return string(rune(i)), nil
+
+	// If the size is non-zero and the force flag isn't present, return an error.
+	if !force {
+		return nil, errors.New("a non-empty output file exists, to overwrite use the --force option")
+	}
+
+	return os.Create(filename)
 }

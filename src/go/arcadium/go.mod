@@ -1,6 +1,6 @@
 module github.com/AlphaPixel/EntropyLex/src/go/arcadium
 
-go 1.26
+go 1.27
 
 tool (
 	golang.org/x/vuln/cmd/govulncheck
@@ -9,7 +9,6 @@ tool (
 
 require (
 	github.com/google/go-cmp v0.7.0
-	github.com/google/uuid v1.6.0
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
 	github.com/urfave/cli/v3 v3.11.0
 )
@@ -24,5 +23,5 @@ require (
 	golang.org/x/text v0.39.0 // indirect
 	golang.org/x/tools v0.49.0 // indirect
 	golang.org/x/vuln v1.7.0 // indirect
-	honnef.co/go/tools v0.7.0 // indirect
+	honnef.co/go/tools v0.8.1 // indirect
 )

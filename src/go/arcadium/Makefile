@@ -146,5 +146,5 @@ dist/$(os)/$(arch):
 
 clean:
 	@printf "\nClean...\n"
-	-go clean -testcache -cache
+	-go clean -i -r -cache -testcache -modcache -fuzzcache
 	-rm -rf dist
