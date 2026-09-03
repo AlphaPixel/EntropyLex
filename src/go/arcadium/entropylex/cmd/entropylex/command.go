@@ -90,11 +90,22 @@ non-empty output file exists, it can be overwritten using the -force option.
 		},
 
 		Action: func(ctx context.Context, cmd *cli.Command) error {
+			// Validate the bit depth.
+			bitDepth := cmd.Uint("bit-depth")
+			switch bitDepth {
+			case 8:
+				break
+			case 12, 14, 16:
+				return fmt.Errorf("%w: bit depth %d unimplemented", ErrUnimplemented, bitDepth)
+			default:
+				return fmt.Errorf("%w: invalid bit depth \"%d\", possible values are 8, 12, 14 or 16", ErrUsage, bitDepth)
+			}
+
 			// Setup the output.
 			outfile := os.Stdout
 			f, err := OutputFile(cmd.String("output"), cmd.Bool("force"))
 			if err != nil {
-				return fmt.Errorf("%w: %s", ErrUsage, err)
+				return fmt.Errorf("%w: %w", ErrUsage, err)
 			}
 			if f != nil {
 				outfile = f
@@ -119,20 +130,13 @@ non-empty output file exists, it can be overwritten using the -force option.
 			}
 
 			// Are we encoding or decoding?
-			decode := cmd.Bool("decode")
-
 			var el runner
-			bitDepth := cmd.Uint("bit-depth")
 			switch bitDepth {
 			case 8:
-				el, err = NewEntropyLex8(infile, outfile, decode)
+				el, err = NewEntropyLex8(infile, outfile, cmd.Bool("decode"))
 				if err != nil {
 					return err
 				}
-			case 12, 14, 16:
-				return fmt.Errorf("%w: bit depth %d unimplemented", ErrUnimplemented, bitDepth)
-			default:
-				return fmt.Errorf("%w: invalid bit depth \"%d\", possible values are 8, 12, 14 or 16", ErrUsage, bitDepth)
 			}
 
 			return el.Run(ctx)

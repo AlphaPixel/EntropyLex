@@ -49,6 +49,14 @@ func Test_NewCommand(t *testing.T) {
 				assert.Error(t, err, `usage error: invalid bit depth "42", possible values are 8, 12, 14 or 16`)
 			},
 		},
+		{
+			name: "unimplemented bit depth",
+			info: build.Info("name", "version", "branch", "commit", "date"),
+			args: []string{"cmd", "-b", "16"},
+			verify: func(t *testing.T, err error, _ string) {
+				assert.Error(t, err, `unimplemented: bit depth 16 unimplemented`)
+			},
+		},
 		// --output
 		{
 			name: "existing file, w/o force",
