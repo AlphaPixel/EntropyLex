@@ -50,11 +50,11 @@ func (cp CodePoint) Decode() (string, error) {
 	s := string(cp)
 
 	if s == "" {
-		return "", fmt.Errorf("%w: \"\"", ErrInvalidCodePoint)
+		return "", fmt.Errorf("%w, \"\"", ErrInvalidCodePoint)
 	}
 
 	if !reCodePoint.MatchString(s) {
-		return "", fmt.Errorf("%w: %s", ErrInvalidCodePoint, s)
+		return "", fmt.Errorf("%w, %s", ErrInvalidCodePoint, s)
 	}
 
 	// Yes, I know I am ignoring the error from the parse. Yes, I know this is a
@@ -64,9 +64,9 @@ func (cp CodePoint) Decode() (string, error) {
 
 	switch {
 	case i > maxCodePoint:
-		return "", fmt.Errorf("%w: %s", ErrInvalidCodePoint, s)
+		return "", fmt.Errorf("%w, %s", ErrInvalidCodePoint, s)
 	case i >= surrogateRangeLow && i <= surrogateRangeHi:
-		return "", fmt.Errorf("%w: surrogate code point %s", ErrInvalidCodePoint, s)
+		return "", fmt.Errorf("%w, surrogate code point %s", ErrInvalidCodePoint, s)
 	}
 	return string(rune(i)), nil
 }

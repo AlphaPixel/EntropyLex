@@ -22,35 +22,30 @@
 
 package main
 
-import (
-	"context"
-	"errors"
-	"fmt"
-	"os"
-	"path/filepath"
+type (
+	ErrorCode struct {
+		msg  string
+		code int
+	}
+)
 
-	"github.com/AlphaPixel/EntropyLex/src/go/arcadium/build"
+func (err ErrorCode) Error() string {
+	return err.msg
+}
+
+func (err ErrorCode) Code() int {
+	return err.code
+}
+
+const (
+	UsageErrorCode         int = 1
+	InternalErrorCode      int = 4
+	UnknownErrorCode       int = 9
+	UnimplementedErrorCode int = 111
 )
 
 var (
-	Version string
-	Branch  string
-	Commit  string
-	Date    string
+	ErrUsage         = ErrorCode{msg: "usage error", code: UsageErrorCode}
+	ErrInternal      = ErrorCode{msg: "internal error", code: InternalErrorCode}
+	ErrUnimplemented = ErrorCode{msg: "unimplemented", code: UnimplementedErrorCode}
 )
-
-func Main() error {
-	info := build.Info(filepath.Base(os.Args[0]), Version, Branch, Commit, Date)
-	return NewCommand(info).Run(context.Background(), os.Args)
-}
-
-func main() {
-	if err := Main(); err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		var errorCode ErrorCode
-		if errors.As(err, &errorCode) {
-			os.Exit(errorCode.Code())
-		}
-		os.Exit(UnknownErrorCode)
-	}
-}

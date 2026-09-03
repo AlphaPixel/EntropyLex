@@ -34,10 +34,10 @@ func Test_InputFile(t *testing.T) {
 		},
 		{
 			name:     "unknown filename",
-			filename: "xyq.pdq",
+			filename: "xyz.pdq",
 			verify: func(t *testing.T, f *os.File, err error) {
 				assert.Nil(t, f)
-				assert.Error(t, err, "stat xyq.pdq: no such file or directory")
+				assert.Error(t, err, "stat xyz.pdq: no such file or directory")
 			},
 		},
 		{

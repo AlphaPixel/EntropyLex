@@ -45,11 +45,16 @@ func Test_NewCommand(t *testing.T) {
 			name: "invalid bit depth",
 			info: build.Info("name", "version", "branch", "commit", "date"),
 			args: []string{"cmd", "-b", "42"},
-			verify: func(t *testing.T, err error, outfile string) {
-				assert.Error(t, err, "invalid value \"42\" for flag -b: possible values are 8, 12, 14 or 16")
-				output, err := os.ReadFile(outfile)
-				assert.Nil(t, err)
-				assert.Contains(t, string(output), `Incorrect Usage: invalid value "42" for flag -b: possible values are 8, 12, 14 or 16`)
+			verify: func(t *testing.T, err error, _ string) {
+				assert.Error(t, err, `usage error: invalid bit depth "42", possible values are 8, 12, 14 or 16`)
+			},
+		},
+		{
+			name: "unimplemented bit depth",
+			info: build.Info("name", "version", "branch", "commit", "date"),
+			args: []string{"cmd", "-b", "16"},
+			verify: func(t *testing.T, err error, _ string) {
+				assert.Error(t, err, `unimplemented: bit depth 16 unimplemented`)
 			},
 		},
 		// --output
@@ -57,24 +62,17 @@ func Test_NewCommand(t *testing.T) {
 			name: "existing file, w/o force",
 			info: build.Info("name", "version", "branch", "commit", "date"),
 			args: []string{"cmd", "-o", "test/output"},
-			verify: func(t *testing.T, err error, outfile string) {
-				assert.Error(t, err, "a non-empty output file exist, to overwrite use the --force option")
-				output, err := os.ReadFile(outfile)
-				assert.Nil(t, err)
-				assert.Contains(t, string(output), `Incorrect Usage: a non-empty output file exist, to overwrite use the --force option`)
+			verify: func(t *testing.T, err error, _ string) {
+				assert.Error(t, err, "usage error: a non-empty output file exists, to overwrite use the --force option")
 			},
 		},
-
 		// FILE
 		{
 			name: "multiple filename args",
 			info: build.Info("name", "version", "branch", "commit", "date"),
 			args: []string{"cmd", "-b", "8", "foo", "bar"},
-			verify: func(t *testing.T, err error, outfile string) {
-				assert.Error(t, err, "usage error")
-				output, err := os.ReadFile(outfile)
-				assert.Nil(t, err)
-				assert.Contains(t, string(output), `Incorrect Usage: extra input file "bar"`)
+			verify: func(t *testing.T, err error, _ string) {
+				assert.Error(t, err, `usage error: extra input file "bar"`)
 			},
 		},
 		{
@@ -82,7 +80,7 @@ func Test_NewCommand(t *testing.T) {
 			info: build.Info("name", "version", "branch", "commit", "date"),
 			args: []string{"cmd", "dict"},
 			verify: func(t *testing.T, err error, outfile string) {
-				assert.Error(t, err, `input file "dict" is a directory`)
+				assert.Error(t, err, `usage error: input file "dict" is a directory`)
 			},
 		},
 	}

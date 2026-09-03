@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
-
-	"github.com/google/uuid"
+	"uuid"
 
 	el "github.com/AlphaPixel/EntropyLex/src/go/arcadium/entropylex/cmd/entropylex"
 	"github.com/AlphaPixel/EntropyLex/src/go/arcadium/test/assert"
@@ -32,7 +31,7 @@ func Test_OutputFile(t *testing.T) {
 		},
 		{
 			name:     "file does not exist",
-			filename: fmt.Sprintf("test/%s", uuid.NewString()),
+			filename: fmt.Sprintf("test/%s", uuid.New().String()),
 			verify: func(t *testing.T, f *os.File, err error) {
 				assert.Nil(t, err)
 				assert.NotNil(t, f)
@@ -79,7 +78,7 @@ func Test_OutputFile(t *testing.T) {
 		},
 		{
 			name:     "file exists, not empty w/o force",
-			filename: fmt.Sprintf("test/%s", uuid.NewString()),
+			filename: fmt.Sprintf("test/%s", uuid.New().String()),
 			force:    false,
 			before: func(t *testing.T, output string) {
 				f, err := os.Create(output)
@@ -91,7 +90,7 @@ func Test_OutputFile(t *testing.T) {
 			},
 			verify: func(t *testing.T, f *os.File, err error) {
 				assert.Nil(t, f)
-				assert.Error(t, err, "a non-empty output file exist, to overwrite use the --force option")
+				assert.Error(t, err, "a non-empty output file exists, to overwrite use the --force option")
 			},
 			after: func(t *testing.T, output string) {
 				assert.Nil(t, os.Remove(output))
@@ -99,7 +98,7 @@ func Test_OutputFile(t *testing.T) {
 		},
 		{
 			name:     "file exists, not empty w/force",
-			filename: fmt.Sprintf("test/%s", uuid.NewString()),
+			filename: fmt.Sprintf("test/%s", uuid.New().String()),
 			force:    true,
 			before: func(t *testing.T, output string) {
 				f, err := os.Create(output)

@@ -24,7 +24,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net/mail"
@@ -80,13 +79,6 @@ non-empty output file exists, it can be overwritten using the -force option.
 				Aliases: []string{"b"},
 				Usage:   "encoder bit depth, possible values are 8, 12, 14 or 16",
 				Value:   8,
-				Validator: func(i uint) error {
-					switch i {
-					case 8, 12, 14, 16:
-						return nil
-					}
-					return errors.New("possible values are 8, 12, 14 or 16")
-				},
 			},
 			&cli.StringFlag{
 				Name:    "output",
@@ -101,13 +93,22 @@ non-empty output file exists, it can be overwritten using the -force option.
 		},
 
 		Action: func(ctx context.Context, cmd *cli.Command) error {
+			// Validate the bit depth.
+			bitDepth := cmd.Uint("bit-depth")
+			switch bitDepth {
+			case 8:
+				break
+			case 12, 14, 16:
+				return fmt.Errorf("%w: bit depth %d unimplemented", ErrUnimplemented, bitDepth)
+			default:
+				return fmt.Errorf("%w: invalid bit depth \"%d\", possible values are 8, 12, 14 or 16", ErrUsage, bitDepth)
+			}
+
 			// Setup the output.
 			outfile := os.Stdout
 			f, err := OutputFile(cmd.String("output"), cmd.Bool("force"))
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Incorrect Usage: %v\n\n", err)
-				_ = cli.DefaultShowRootCommandHelp(cmd)
-				return err
+				return fmt.Errorf("%w: %w", ErrUsage, err)
 			}
 			if f != nil {
 				outfile = f
@@ -118,16 +119,12 @@ non-empty output file exists, it can be overwritten using the -force option.
 			infile := os.Stdin
 			switch {
 			case cmd.NArg() > 1:
-				fmt.Fprintf(os.Stderr, "Incorrect Usage: extra input file \"%s\"\n\n", cmd.Args().Get(1))
-				_ = cli.DefaultShowRootCommandHelp(cmd)
-				return errors.New("usage error")
+				return fmt.Errorf("%w: extra input file \"%s\"", ErrUsage, cmd.Args().Get(1))
 			case cmd.NArg() == 1:
 				filename := cmd.Args().Get(0)
 				f, err := InputFile(filename)
 				if err != nil {
-					fmt.Fprintf(os.Stderr, "Incorrect Usage: %v\n\n", err)
-					_ = cli.DefaultShowRootCommandHelp(cmd)
-					return err
+					return fmt.Errorf("%w: %w", ErrUsage, err)
 				}
 				if f != nil {
 					infile = f
@@ -136,17 +133,12 @@ non-empty output file exists, it can be overwritten using the -force option.
 			}
 
 			var enc entropylex.Encoding
-			bitDepth := cmd.Uint("bit-depth")
 			switch bitDepth {
 			case 8:
 				enc, err = NewEntropyLex8Encoding()
 				if err != nil {
 					return err
 				}
-			case 12, 14, 16:
-				return fmt.Errorf("bit depth %d unimplemented", bitDepth)
-			default:
-				return errors.New("usage error")
 			}
 
 			// Are we encoding or decoding?

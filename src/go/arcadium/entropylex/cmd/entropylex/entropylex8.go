@@ -23,7 +23,7 @@
 package main
 
 import (
-	"errors"
+	"fmt"
 	"io"
 
 	"github.com/AlphaPixel/EntropyLex/src/go/arcadium/entropylex/dictionary"
@@ -37,17 +37,17 @@ const (
 func NewEntropyLex8Encoding() (*entropylex8.Encoding, error) {
 	lxjfile, err := dictFS.Open(el8LXJFile)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open dictionary \"%s\", %w: %w", el8LXJFile, err, ErrInternal)
 	}
 
 	lxjf, ok := lxjfile.(io.ReadSeekCloser)
 	if !ok {
-		return nil, errors.New("internal error: failed to load default lxj dictionary")
+		return nil, fmt.Errorf("failed to load default lxj dictionary: %w", ErrInternal)
 	}
 
 	lxj, err := dictionary.NewLXJValidated(lxjf)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %w", err, ErrInternal)
 	}
 
 	return entropylex8.NewEncoding(lxj), nil

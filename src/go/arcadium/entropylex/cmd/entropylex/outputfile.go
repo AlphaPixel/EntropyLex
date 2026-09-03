@@ -57,7 +57,7 @@ func OutputFile(filename string, force bool) (*os.File, error) {
 
 	// If the size is non-zero and the force flag isn't present, return an error.
 	if !force {
-		return nil, errors.New("a non-empty output file exist, to overwrite use the --force option")
+		return nil, errors.New("a non-empty output file exists, to overwrite use the --force option")
 	}
 
 	return os.Create(filename)
