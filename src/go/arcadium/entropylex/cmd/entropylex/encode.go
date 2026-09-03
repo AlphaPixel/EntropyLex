@@ -20,52 +20,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package unicode
+package main
 
 import (
-	"errors"
-	"fmt"
-	"regexp"
-	"strconv"
+	"context"
+	"io"
+
+	"github.com/AlphaPixel/EntropyLex/src/go/arcadium/entropylex"
+	"github.com/dolmen-go/contextio"
 )
 
-var (
-	reCodePoint = regexp.MustCompile(`^(?:U\+[0-9A-F]{4}|U\+[1-9A-F][0-9A-F]{4,5})$`)
+func Encode(ctx context.Context, enc entropylex.Encoding, r io.Reader, w io.Writer) error {
+	var (
+		output = contextio.NewWriter(ctx, entropylex.NewEncoder(enc, w))
+		input  = contextio.NewReader(ctx, r)
 
-	ErrInvalidCodePoint = errors.New("invalid unicode code point")
-)
+		buffer = make([]byte, 1024)
+	)
 
-type (
-	CodePoint string
-)
+	for {
+		bytesRead, err := input.Read(buffer)
 
-const (
-	maxCodePoint      = 0x10FFFF
-	surrogateRangeLow = 0xD800
-	surrogateRangeHi  = 0xDFFF
-)
+		if bytesRead > 0 {
+			if _, err := output.Write(buffer); err != nil {
+				return err
+			}
+		}
 
-func (cp CodePoint) Decode() (string, error) {
-	s := string(cp)
-
-	if s == "" {
-		return "", fmt.Errorf("%w, \"\"", ErrInvalidCodePoint)
+		if err != nil {
+			if err == io.EOF {
+				return err
+			}
+			break
+		}
 	}
 
-	if !reCodePoint.MatchString(s) {
-		return "", fmt.Errorf("%w, %s", ErrInvalidCodePoint, s)
-	}
-
-	// Yes, I know I am ignoring the error from the parse. Yes, I know this is a
-	// smell that indicates that validation and parsing want to be one step.
-	// However I am not going to write a json unmarhaller for this.
-	i, _ := strconv.ParseUint(s[2:], 16, 32)
-
-	switch {
-	case i > maxCodePoint:
-		return "", fmt.Errorf("%w, %s", ErrInvalidCodePoint, s)
-	case i >= surrogateRangeLow && i <= surrogateRangeHi:
-		return "", fmt.Errorf("%w, surrogate code point %s", ErrInvalidCodePoint, s)
-	}
-	return string(rune(i)), nil
+	return nil
 }

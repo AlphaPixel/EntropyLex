@@ -25,12 +25,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/mail"
 	"os"
 	"path/filepath"
 
-	"github.com/dolmen-go/contextio"
 	"github.com/urfave/cli/v3"
 
 	"github.com/AlphaPixel/EntropyLex/src/go/arcadium/build"
@@ -143,43 +141,11 @@ non-empty output file exists, it can be overwritten using the -force option.
 
 			// Are we encoding or decoding?
 			if cmd.Bool("decode") {
-				return decode(ctx, enc, infile, outfile)
+				return Decode(ctx, enc, infile, outfile)
 			}
-			return encode(ctx, enc, infile, outfile)
+			return Encode(ctx, enc, infile, outfile)
 		},
 	}
 
 	return cmd
-}
-
-func decode(context.Context, entropylex.Encoding, io.Reader, io.Writer) error {
-	return nil
-}
-
-func encode(ctx context.Context, enc entropylex.Encoding, r io.Reader, w io.Writer) error {
-	var (
-		output = contextio.NewWriter(ctx, entropylex.NewEncoder(enc, w))
-		input  = contextio.NewReader(ctx, r)
-
-		buffer = make([]byte, 1024)
-	)
-
-	for {
-		bytesRead, err := input.Read(buffer)
-
-		if bytesRead > 0 {
-			if _, err := output.Write(buffer); err != nil {
-				return err
-			}
-		}
-
-		if err != nil {
-			if err == io.EOF {
-				return err
-			}
-			break
-		}
-	}
-
-	return nil
 }

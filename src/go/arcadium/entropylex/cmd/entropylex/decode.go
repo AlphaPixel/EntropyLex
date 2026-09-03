@@ -20,33 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package arcadium
+package main
 
-import "fmt"
+import (
+	"context"
+	"io"
 
-type (
-	ReturnCode uint8
-
-	ErrorCode struct {
-		code ReturnCode
-	}
+	"github.com/AlphaPixel/EntropyLex/src/go/arcadium/entropylex"
 )
 
-func (err ErrorCode) Error() string {
-	return fmt.Sprintf("code: %d", err.code)
+func Decode(context.Context, entropylex.Encoding, io.Reader, io.Writer) error {
+	return nil
 }
-
-func (err ErrorCode) Code() ReturnCode {
-	return err.code
-}
-
-const (
-	UsageErrorCode    ReturnCode = 1
-	InternalErrorCode ReturnCode = 4
-	UnknownErrorCode  ReturnCode = 9
-)
-
-var (
-	ErrUsage    = fmt.Errorf("usage error, %w", ErrorCode{code: UsageErrorCode})
-	ErrInternal = fmt.Errorf("internal error, %w", ErrorCode{code: InternalErrorCode})
-)
