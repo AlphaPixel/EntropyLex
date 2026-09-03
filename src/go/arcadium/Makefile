@@ -106,8 +106,8 @@ vet:
 	go vet ./...
 
 staticcheck:
-	#@printf "\nRunning staticcheck...\n"
-	#go tool staticcheck ./...
+	@printf "\nRunning staticcheck...\n"
+	go tool staticcheck ./...
 
 vuln:
 	@printf "\nRunning govulncheck...\n"
