@@ -20,52 +20,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package unicode
+package main
 
-import (
-	"errors"
-	"fmt"
-	"regexp"
-	"strconv"
+type (
+	ErrorCode struct {
+		msg  string
+		code int
+	}
+)
+
+func (err ErrorCode) Error() string {
+	return err.msg
+}
+
+func (err ErrorCode) Code() int {
+	return err.code
+}
+
+const (
+	UsageErrorCode         int = 1
+	InternalErrorCode      int = 4
+	UnknownErrorCode       int = 9
+	UnimplementedErrorCode int = 111
 )
 
 var (
-	reCodePoint = regexp.MustCompile(`^(?:U\+[0-9A-F]{4}|U\+[1-9A-F][0-9A-F]{4,5})$`)
-
-	ErrInvalidCodePoint = errors.New("invalid unicode code point")
+	ErrUsage         = ErrorCode{msg: "usage error", code: UsageErrorCode}
+	ErrInternal      = ErrorCode{msg: "internal error", code: InternalErrorCode}
+	ErrUnimplemented = ErrorCode{msg: "unimplemented", code: UnimplementedErrorCode}
 )
-
-type (
-	CodePoint string
-)
-
-const (
-	maxCodePoint      = 0x10FFFF
-	surrogateRangeLow = 0xD800
-	surrogateRangeHi  = 0xDFFF
-)
-
-func (cp CodePoint) Decode() (string, error) {
-	s := string(cp)
-
-	if s == "" {
-		return "", fmt.Errorf("%w, \"\"", ErrInvalidCodePoint)
-	}
-
-	if !reCodePoint.MatchString(s) {
-		return "", fmt.Errorf("%w, %s", ErrInvalidCodePoint, s)
-	}
-
-	// Yes, I know I am ignoring the error from the parse. Yes, I know this is a
-	// smell that indicates that validation and parsing want to be one step.
-	// However I am not going to write a json unmarhaller for this.
-	i, _ := strconv.ParseUint(s[2:], 16, 32)
-
-	switch {
-	case i > maxCodePoint:
-		return "", fmt.Errorf("%w, %s", ErrInvalidCodePoint, s)
-	case i >= surrogateRangeLow && i <= surrogateRangeHi:
-		return "", fmt.Errorf("%w, surrogate code point %s", ErrInvalidCodePoint, s)
-	}
-	return string(rune(i)), nil
-}

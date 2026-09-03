@@ -22,7 +22,7 @@ func Test_UnicodeCodePoint_String(t *testing.T) {
 			verify: func(t *testing.T, s string, err error) {
 				assert.Equal(t, s, "")
 				assert.IsError(t, err, unicode.ErrInvalidCodePoint)
-				assert.Error(t, err, `invalid unicode code point: ""`)
+				assert.Error(t, err, `invalid unicode code point, ""`)
 			},
 		},
 		{
@@ -31,7 +31,7 @@ func Test_UnicodeCodePoint_String(t *testing.T) {
 			verify: func(t *testing.T, s string, err error) {
 				assert.Equal(t, s, "")
 				assert.IsError(t, err, unicode.ErrInvalidCodePoint)
-				assert.Error(t, err, `invalid unicode code point: U+00020`)
+				assert.Error(t, err, `invalid unicode code point, U+00020`)
 			},
 		},
 		{
@@ -40,7 +40,7 @@ func Test_UnicodeCodePoint_String(t *testing.T) {
 			verify: func(t *testing.T, s string, err error) {
 				assert.Equal(t, s, "")
 				assert.IsError(t, err, unicode.ErrInvalidCodePoint)
-				assert.Error(t, err, "invalid unicode code point: foobar")
+				assert.Error(t, err, "invalid unicode code point, foobar")
 			},
 		},
 		{
@@ -49,7 +49,7 @@ func Test_UnicodeCodePoint_String(t *testing.T) {
 			verify: func(t *testing.T, s string, err error) {
 				assert.Equal(t, s, "")
 				assert.IsError(t, err, unicode.ErrInvalidCodePoint)
-				assert.Error(t, err, "invalid unicode code point: surrogate code point U+D800")
+				assert.Error(t, err, "invalid unicode code point, surrogate code point U+D800")
 			},
 		},
 		{
@@ -58,7 +58,7 @@ func Test_UnicodeCodePoint_String(t *testing.T) {
 			verify: func(t *testing.T, s string, err error) {
 				assert.Equal(t, s, "")
 				assert.IsError(t, err, unicode.ErrInvalidCodePoint)
-				assert.Error(t, err, "invalid unicode code point: surrogate code point U+DFFF")
+				assert.Error(t, err, "invalid unicode code point, surrogate code point U+DFFF")
 			},
 		},
 		{
@@ -67,7 +67,7 @@ func Test_UnicodeCodePoint_String(t *testing.T) {
 			verify: func(t *testing.T, s string, err error) {
 				assert.Equal(t, s, "")
 				assert.IsError(t, err, unicode.ErrInvalidCodePoint)
-				assert.Error(t, err, "invalid unicode code point: surrogate code point U+DCDE")
+				assert.Error(t, err, "invalid unicode code point, surrogate code point U+DCDE")
 			},
 		},
 		{
@@ -76,7 +76,7 @@ func Test_UnicodeCodePoint_String(t *testing.T) {
 			verify: func(t *testing.T, s string, err error) {
 				assert.Equal(t, s, "")
 				assert.IsError(t, err, unicode.ErrInvalidCodePoint)
-				assert.Error(t, err, "invalid unicode code point: U+110000")
+				assert.Error(t, err, "invalid unicode code point, U+110000")
 			},
 		},
 		// success
