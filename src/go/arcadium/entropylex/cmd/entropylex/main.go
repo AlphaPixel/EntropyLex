@@ -32,6 +32,7 @@ import (
 	"github.com/AlphaPixel/EntropyLex/src/go/arcadium/build"
 )
 
+// This information is provided via the build system.
 var (
 	Version string
 	Branch  string
@@ -39,19 +40,11 @@ var (
 	Date    string
 )
 
-type (
-	runner interface {
-		Run(ctx context.Context) error
-	}
-)
-
-func Main() error {
-	info := build.Info(filepath.Base(os.Args[0]), Version, Branch, Commit, Date)
-	return NewCommand(info).Run(context.Background(), os.Args)
-}
-
+// main is the entry point for the application. It creates a command and executes it.
 func main() {
-	if err := Main(); err != nil {
+	info := build.Info(filepath.Base(os.Args[0]), Version, Branch, Commit, Date)
+
+	if err := NewCommand(info).Run(context.Background(), os.Args); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		var errorCode ErrorCode
 		if errors.As(err, &errorCode) {

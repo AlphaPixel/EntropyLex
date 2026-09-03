@@ -20,19 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package entropylex
+package main
 
 import (
+	"context"
 	"io"
+
+	"github.com/AlphaPixel/EntropyLex/src/go/arcadium/entropylex"
 )
 
-type (
-	decoder struct {
-		enc Encoding
-		r   io.Reader
-	}
-)
-
-func (d *decoder) Read(p []byte) (n int, err error) {
-	return 0, nil
+func Decode(context.Context, entropylex.Encoding, io.Reader, io.Writer) error {
+	return nil
 }

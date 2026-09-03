@@ -33,14 +33,12 @@ type (
 	}
 )
 
-// NewEncoder returns a new entropy lex stream encoder. Data written to the
-// returned writer will be encoded using enc and then written to w. When
-// finished writing, the caller must Close the returned encoder.
-func NewEncoder(enc *Encoding, w io.Writer) io.WriteCloser {
+// NewEncoder returns a new entropy lex stream encoder.
+func NewEncoder(enc Encoding, w io.Writer) io.Writer {
 	return &encoder{enc: enc, w: w}
 }
 
 // NewDecoder constructs a new entropy lex stream decoder.
-func NewDecoder(enc *Encoding, r io.Reader) io.Reader {
+func NewDecoder(enc Encoding, r io.Reader) io.Reader {
 	return &decoder{enc: enc, r: r}
 }

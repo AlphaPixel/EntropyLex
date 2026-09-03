@@ -32,6 +32,7 @@ import (
 	"github.com/urfave/cli/v3"
 
 	"github.com/AlphaPixel/EntropyLex/src/go/arcadium/build"
+	"github.com/AlphaPixel/EntropyLex/src/go/arcadium/entropylex"
 )
 
 func NewCommand(info build.Information) *cli.Command {
@@ -129,17 +130,20 @@ non-empty output file exists, it can be overwritten using the -force option.
 				}
 			}
 
-			// Are we encoding or decoding?
-			var el runner
+			var enc entropylex.Encoding
 			switch bitDepth {
 			case 8:
-				el, err = NewEntropyLex8(infile, outfile, cmd.Bool("decode"))
+				enc, err = NewEntropyLex8Encoding()
 				if err != nil {
 					return err
 				}
 			}
 
-			return el.Run(ctx)
+			// Are we encoding or decoding?
+			if cmd.Bool("decode") {
+				return Decode(ctx, enc, infile, outfile)
+			}
+			return Encode(ctx, enc, infile, outfile)
 		},
 	}
 

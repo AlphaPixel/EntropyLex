@@ -20,19 +20,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package entropylex
+package main
 
 import (
+	"context"
 	"io"
+
+	"github.com/AlphaPixel/EntropyLex/src/go/arcadium/entropylex"
+	"github.com/dolmen-go/contextio"
 )
 
-type (
-	decoder struct {
-		enc Encoding
-		r   io.Reader
+func Encode(ctx context.Context, enc entropylex.Encoding, r io.Reader, w io.Writer) error {
+	var (
+		output = contextio.NewWriter(ctx, entropylex.NewEncoder(enc, w))
+		input  = contextio.NewReader(ctx, r)
+
+		buffer = make([]byte, 1024)
+	)
+
+	for {
+		bytesRead, err := input.Read(buffer)
+
+		if bytesRead > 0 {
+			if _, err := output.Write(buffer); err != nil {
+				return err
+			}
+		}
+
+		if err != nil {
+			if err == io.EOF {
+				return err
+			}
+			break
+		}
 	}
-)
 
-func (d *decoder) Read(p []byte) (n int, err error) {
-	return 0, nil
+	return nil
 }
